@@ -1,0 +1,28 @@
+---
+title: "NYC Basemap"
+author: "James McQuilkin"
+date: "2026-02-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#Load Packages
+library(sf)
+library(tidyverse)
+library(here)
+```
+
+## Plotting 2020 Neighborhood Tabulation Areas NYC
+
+```{r}
+nynta <- read_sf(here("project_data/nynta2020_25d/nynta2020.shp"))
+plot(nynta["NTA2020"])
+```
+
+## 
+
+```{}
+
+```

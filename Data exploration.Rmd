@@ -1,0 +1,25 @@
+---
+title: "Data exploration"
+author: "Ashe King"
+date: "2026-02-26"
+output: github_document
+---
+
+```{r, warning=FALSE, include=FALSE}
+# initialize libraries
+library(sf)
+library(tidyverse)
+library(data.table)
+library(utils)
+```
+
+```{r}
+# read in data and store in data table
+nycDataSept <- fread(file = "C:/Users/KingA/Senesitive data/twitter_na_2017-09_ny.csv.gz")
+```
+
+```{r}
+# explore data
+head(nycDataSept)
+```
+

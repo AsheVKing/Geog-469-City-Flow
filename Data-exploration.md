@@ -37,3 +37,34 @@ head(nycDataSept)
     ## 4:                                                               Again..  why would you NOT lift? https://t.co/eN2e4O02sM
     ## 5:                                                          Drew Blood! #justgladtobehere @ Pinks https://t.co/z9RtZMZaqx
     ## 6:                                                                                                       In typical fashi
+
+``` r
+#Cutting off first 100 rows
+sub_nyc_data <- slice_head(nycDataSept, n = 100)
+# Extracting useful data and converting it into a simple feature
+sf_nyc_data <- sub_nyc_data %>% 
+  select(id, u_id, home, lon, lat) %>% 
+  st_as_sf(coords = c("lon", "lat"), crs = 4326)
+# plotting the frist 100 posts
+ggplot() +
+  geom_sf(data = sf_nyc_data["u_id"])
+```
+
+![](Data-exploration_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+``` r
+# Setting up basemap
+nynta <- read_sf(here("project_data/nynta2020_25d/nynta2020.shp"))
+nynta_proj <- st_transform(nynta, crs = 6347)
+grid_map <- nynta_proj %>% 
+  st_make_grid(cellsize = 600, square = F, crs = st_crs(nynta_proj))
+# created a 600m cell size grid to overlay the map
+grid_map <- st_intersection(grid_map, nynta_proj)
+# cut down the grid to only include grid cells that intersect the NYC boundaries
+ggplot()+
+  geom_sf(data = nynta_proj["BoroName"], aes(fill = BoroName))+
+  geom_sf(data = grid_map, fill = NA)+
+  geom_sf(data = sf_nyc_data)
+```
+
+![](Data-exploration_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->

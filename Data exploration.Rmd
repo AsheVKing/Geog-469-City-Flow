@@ -22,4 +22,29 @@ nycDataSept <- fread(file = "C:/Users/KingA/Senesitive data/twitter_na_2017-09_n
 # explore data
 head(nycDataSept)
 ```
+```{r}
+sub_nyc_data <- slice_head(nycDataSept, n = 100)
+sf_nyc_data <- sub_nyc_data %>% 
+  select(id, u_id, home, lon, lat) %>% 
+  st_as_sf(coords = c("lon", "lat"), crs = 4326)
+#sf_nyc_data <- st_transform(sf_nyc_data, crs = st_crs(nynta_proj))
+ggplot() +
+  geom_sf(data = sf_nyc_data["u_id"])
+```
+
+```{r}
+# Setting up basemap
+nynta <- read_sf(here("project_data/nynta2020_25d/nynta2020.shp"))
+nynta_proj <- st_transform(nynta, crs = 6347)
+grid_map <- nynta_proj %>% 
+  st_make_grid(cellsize = 600, square = F, crs = st_crs(nynta_proj))
+# created a 600m cell size grid to overlay the map
+grid_map <- st_intersection(grid_map, nynta_proj)
+# cut down the grid to only include grid cells that intersect the NYC boundaries
+ggplot()+
+  geom_sf(data = nynta_proj["BoroName"], aes(fill = BoroName))+
+  geom_sf(data = grid_map, fill = NA)+
+  geom_sf(data = sf_nyc_data)
+```
+
 

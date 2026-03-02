@@ -43,3 +43,7 @@ ggplot() +
   geom_sf(data = grid_map, fill = NA)
 #mapping both layers onto the same graph
 ```
+```{r}
+head(grid_map)
+```
+

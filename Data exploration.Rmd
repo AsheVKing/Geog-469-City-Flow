@@ -14,6 +14,8 @@ library(utils)
 library(here)
 library(h3jsr)
 library(tmap)
+
+h3_res = 8
 ```
 
 ```{r}
@@ -46,7 +48,7 @@ nynta_buffer <- nynta_proj["BoroName"] %>%
   st_buffer(dist = 100)
 #Creating H3 gridmap
 grid_map <-nynta_buffer %>%
-  polygon_to_cells(res = 8) %>% 
+  polygon_to_cells(res = h3_res) %>% 
   cell_to_polygon(simple = T)
 # ploting h3 map over basemap
 tm_shape(nynta_proj["BoroName"])+
@@ -55,4 +57,13 @@ tm_shape(nynta_proj["BoroName"])+
   tm_polygons(alpha = 0.5)
 ```
 
+```{r}
+```
+
+
+```{r}
+grid_map_index <- nynta_buffer %>% 
+  polygon_to_cells(, res = h3_res)
+grid_map_index
+```
 

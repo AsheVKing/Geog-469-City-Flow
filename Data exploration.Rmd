@@ -62,8 +62,16 @@ tm_shape(nynta_proj["BoroName"])+
 
 
 ```{r}
+#Creating the interaction matrix for the h3 Cells
+#get the h3 Cell names
 grid_map_index <- nynta_buffer %>% 
   polygon_to_cells(, res = h3_res)
-grid_map_index
+current_index = 0
+#unpack it from the weird list the h3 function outputs
+keys <- unlist(grid_map_index)
+# create a list of length 2 for martix names, using the h3 cell names as indexes for the matrix
+key_list <- list(keys, keys)
+# Building martix with cell filled with integer 0 ~1400 col & rows
+h3_interaction_matrix <- matrix(data = 0, nrow = length(keys), ncol = length(keys), dimnames = key_list)
 ```
 

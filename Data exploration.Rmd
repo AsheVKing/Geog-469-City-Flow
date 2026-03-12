@@ -12,6 +12,10 @@ library(tidyverse)
 library(data.table)
 library(utils)
 library(here)
+library(h3jsr)
+library(tmap)
+
+h3_res = 8
 ```
 
 ```{r}
@@ -37,17 +41,29 @@ ggplot() +
 
 ```{r}
 # Setting up basemap
-nynta <- read_sf(here("project_data/nynta2020_25d/nynta2020.shp"))
+nynta <- read_sf(here("analysis/data/raw_data/nynta2020_25d/nynta2020.shp"))
 nynta_proj <- st_transform(nynta, crs = 6347)
-grid_map <- nynta_proj %>% 
-  st_make_grid(cellsize = 600, square = F, crs = st_crs(nynta_proj))
-# created a 600m cell size grid to overlay the map
-grid_map <- st_intersection(grid_map, nynta_proj)
-# cut down the grid to only include grid cells that intersect the NYC boundaries
-ggplot()+
-  geom_sf(data = nynta_proj["BoroName"], aes(fill = BoroName))+
-  geom_sf(data = grid_map, fill = NA)+
-  geom_sf(data = sf_nyc_data)
+#creating a buffer so these is less edges being left out of h3 grid
+nynta_buffer <- nynta_proj["BoroName"] %>% 
+  st_buffer(dist = 100)
+#Creating H3 gridmap
+grid_map <-nynta_buffer %>%
+  polygon_to_cells(res = h3_res) %>% 
+  cell_to_polygon(simple = T)
+# ploting h3 map over basemap
+tm_shape(nynta_proj["BoroName"])+
+  tm_borders()+
+  tm_shape(grid_map)+
+  tm_polygons(alpha = 0.5)
 ```
 
+```{r}
+```
+
+
+```{r}
+grid_map_index <- nynta_buffer %>% 
+  polygon_to_cells(, res = h3_res)
+grid_map_index
+```
 

@@ -1,0 +1,58 @@
+
+
+```{r}
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(here)
+
+
+df <- read_csv(here("analysis/data/raw_data/project_data/twitter_na_2017-09_ny.csv.gz"))
+
+posts_per_user <- df %>%
+  group_by(u_id) %>%
+  summarise(post_count = n())
+
+ggplot(posts_per_user, aes(x = post_count)) +
+  geom_histogram(binwidth = 1, fill = "blue", color = "red") +
+  labs(
+    title = "Posts per Account - September 2017",
+    x = "Number of Posts",
+    y = "Number of Accounts"
+  )
+
+ggplot(posts_per_user, aes(x = post_count)) +
+  geom_boxplot() +
+  labs(
+    title = "Posts per Account - September 2017",
+    x = "Number of Posts",
+    y = "Number of Accounts"
+  )
+```
+
+
+```{r}
+summary(posts_per_user$post_count)
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+

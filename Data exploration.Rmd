@@ -13,7 +13,9 @@ library(data.table)
 library(utils)
 library(here)
 library(h3jsr)
+library(h3r)
 library(tmap)
+library(dplyr)
 
 h3_res = 8
 ```
@@ -74,4 +76,35 @@ key_list <- list(keys, keys)
 # Building martix with cell filled with integer 0 ~1400 col & rows
 h3_interaction_matrix <- matrix(data = 0, nrow = length(keys), ncol = length(keys), dimnames = key_list)
 ```
+```{r}
+#messing around with the september twitter data to population the matrix
+#getting list of unique user IDs
+user_ids <- nycDataSept$u_id %>% 
+  unique()
+#Create a h3 cell index on nyc data
+h3_nyc_data <- nycDataSept %>% 
+  mutate(h3_cell = latLngToCell(lat = lat, lng = lon, resolution = h3_res)) %>% 
+  select(u_id, home, h3_cell)
+#looping through unique IDs to populate matrix
+# for (id in user_ids){
+#   h3_nyc_data %>% 
+#     filter(u_id == id) %>% 
+#     pull(h3_cell) %>% 
+#     typeof()
+# }
+```
+
+```{r}
+# c <- 0
+# for (id in user_ids){
+#     curr_id <- h3_nyc_data %>%
+#         filter(u_id == id)
+#     if (nrow(curr_id) > 1) {
+#       print(curr_id$u_id)
+#       break
+#     }
+# }
+```
+
+
 

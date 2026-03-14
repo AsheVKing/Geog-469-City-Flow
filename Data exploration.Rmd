@@ -31,7 +31,7 @@ head(nycDataSept)
 ```
 ```{r}
 #Cutting off first 100 rows
-sub_nyc_data <- slice_head(nycDataSept, n = 100)
+sub_nyc_data <- slice_head(nycDataSept, n = 10000)
 # Extracting useful data and converting it into a simple feature
 sf_nyc_data <- sub_nyc_data %>% 
   select(id, u_id, home, lon, lat) %>% 
@@ -76,35 +76,46 @@ key_list <- list(keys, keys)
 # Building martix with cell filled with integer 0 ~1400 col & rows
 h3_interaction_matrix <- matrix(data = 0, nrow = length(keys), ncol = length(keys), dimnames = key_list)
 ```
+
 ```{r}
 #messing around with the september twitter data to population the matrix
+
 #getting list of unique user IDs
 user_ids <- nycDataSept$u_id %>% 
   unique()
+
 #Create a h3 cell index on nyc data
 h3_nyc_data <- nycDataSept %>% 
   mutate(h3_cell = latLngToCell(lat = lat, lng = lon, resolution = h3_res)) %>% 
   select(u_id, home, h3_cell)
-#looping through unique IDs to populate matrix
-# for (id in user_ids){
-#   h3_nyc_data %>% 
-#     filter(u_id == id) %>% 
-#     pull(h3_cell) %>% 
-#     typeof()
-# }
+
+#selecting user post data where the user posted more than 10 times and less than 200 during study period
+h3_nyc_data_slim <- h3_nyc_data %>% 
+  group_by(u_id) %>% 
+  filter(n() > 10 && n() < 200) %>%
+  ungroup()
+
+# converting h3 cells to multipolygons
+h3_nyc_data_slim %>% 
+  group_by(u_id) %>% 
+  pull(h3_cell) %>% 
+  cells_to_multipolygon()
+
+#creating cell counts data frame
+counted_cells <- h3_nyc_data_slim %>% 
+  group_by(h3_cell) %>% 
+  mutate(count = n()) %>%
+  select(h3_cell, count) %>%
+  ungroup() %>% 
+  distinct(h3_cell, count) %>%
+  mutate(geometry = cell_to_polygon(h3_cell)) %>% 
+  st_sf()
+
+#plotting post heatmap
+#TODO use the local dataset 
+#TODO Use Jenks or Quantile distribution for the map fill
+tm_shape(nynta["BoroName"])+
+  tm_borders()+
+  tm_shape(counted_cells)+
+  tm_polygons(fill = "count", fill_alpha = .5)
 ```
-
-```{r}
-# c <- 0
-# for (id in user_ids){
-#     curr_id <- h3_nyc_data %>%
-#         filter(u_id == id)
-#     if (nrow(curr_id) > 1) {
-#       print(curr_id$u_id)
-#       break
-#     }
-# }
-```
-
-
-

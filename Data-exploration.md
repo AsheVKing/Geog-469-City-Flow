@@ -40,7 +40,7 @@ head(nycDataSept)
 
 ``` r
 #Cutting off first 100 rows
-sub_nyc_data <- slice_head(nycDataSept, n = 100)
+sub_nyc_data <- slice_head(nycDataSept, n = 10000)
 # Extracting useful data and converting it into a simple feature
 sf_nyc_data <- sub_nyc_data %>% 
   select(id, u_id, home, lon, lat) %>% 
@@ -54,17 +54,105 @@ ggplot() +
 
 ``` r
 # Setting up basemap
-nynta <- read_sf(here("project_data/nynta2020_25d/nynta2020.shp"))
+nynta <- read_sf(here("analysis/data/raw_data/nynta2020_25d/nynta2020.shp"))
 nynta_proj <- st_transform(nynta, crs = 6347)
-grid_map <- nynta_proj %>% 
-  st_make_grid(cellsize = 600, square = F, crs = st_crs(nynta_proj))
-# created a 600m cell size grid to overlay the map
-grid_map <- st_intersection(grid_map, nynta_proj)
-# cut down the grid to only include grid cells that intersect the NYC boundaries
-ggplot()+
-  geom_sf(data = nynta_proj["BoroName"], aes(fill = BoroName))+
-  geom_sf(data = grid_map, fill = NA)+
-  geom_sf(data = sf_nyc_data)
+#creating a buffer so these is less edges being left out of h3 grid
+nynta_buffer <- nynta_proj["BoroName"] %>% 
+  st_buffer(dist = 100)
+#Creating H3 gridmap
+grid_map <-nynta_buffer %>%
+  polygon_to_cells(res = h3_res) %>% 
+  cell_to_polygon(simple = T)
 ```
 
+    ## Data has been transformed to EPSG:4326.
+
+``` r
+# ploting h3 map over basemap
+tm_shape(nynta_proj["BoroName"])+
+  tm_borders()+
+  tm_shape(grid_map)+
+  tm_polygons(alpha = 0.5)
+```
+
+    ## 
+
+    ## ── tmap v3 code detected ───────────────────────────────────────────────────────
+
+    ## [v3->v4] `tm_polygons()`: use `fill_alpha` instead of `alpha`.
+
 ![](Data-exploration_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+``` r
+#Creating the interaction matrix for the h3 Cells
+#get the h3 Cell names
+grid_map_index <- nynta_buffer %>% 
+  polygon_to_cells(, res = h3_res)
+```
+
+    ## Data has been transformed to EPSG:4326.
+
+``` r
+current_index = 0
+#unpack it from the weird list the h3 function outputs
+keys <- unlist(grid_map_index)
+# create a list of length 2 for martix names, using the h3 cell names as indexes for the matrix
+key_list <- list(keys, keys)
+# Building martix with cell filled with integer 0 ~1400 col & rows
+h3_interaction_matrix <- matrix(data = 0, nrow = length(keys), ncol = length(keys), dimnames = key_list)
+```
+
+``` r
+#messing around with the september twitter data to population the matrix
+
+#getting list of unique user IDs
+user_ids <- nycDataSept$u_id %>% 
+  unique()
+
+#Create a h3 cell index on nyc data
+h3_nyc_data <- nycDataSept %>% 
+  mutate(h3_cell = latLngToCell(lat = lat, lng = lon, resolution = h3_res)) %>% 
+  select(u_id, home, h3_cell)
+
+#selecting user post data where the user posted more than 10 times and less than 200 during study period
+h3_nyc_data_slim <- h3_nyc_data %>% 
+  group_by(u_id) %>% 
+  filter(n() > 10 && n() < 200) %>%
+  ungroup()
+
+# converting h3 cells to multipolygons
+h3_nyc_data_slim %>% 
+  group_by(u_id) %>% 
+  pull(h3_cell) %>% 
+  cells_to_multipolygon()
+```
+
+    ## Geometry set for 1 feature 
+    ## Geometry type: MULTIPOLYGON
+    ## Dimension:     XY
+    ## Bounding box:  xmin: -74.26574 ymin: 40.50056 xmax: -73.69027 ymax: 40.92204
+    ## Geodetic CRS:  WGS 84
+
+    ## MULTIPOLYGON (((-74.26216 40.89917, -74.26411 4...
+
+``` r
+#creating cell counts data frame
+counted_cells <- h3_nyc_data_slim %>% 
+  group_by(h3_cell) %>% 
+  mutate(count = n()) %>%
+  select(h3_cell, count) %>%
+  ungroup() %>% 
+  distinct(h3_cell, count) %>%
+  mutate(geometry = cell_to_polygon(h3_cell)) %>% 
+  st_sf()
+
+#plotting post heatmap
+#TODO use the local dataset 
+#TODO Use Jenks or Quantile distribution for the map fill
+tm_shape(nynta["BoroName"])+
+  tm_borders()+
+  tm_shape(counted_cells)+
+  tm_polygons(fill = "count", fill_alpha = .5)
+```
+
+![](Data-exploration_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->

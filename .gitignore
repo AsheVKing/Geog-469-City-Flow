@@ -8,3 +8,4 @@ analysis/data/raw_data/project_data/twitter_na_2017-11_ny.csv.gz
 analysis/data/derived_data/twitter_with_locality.csv
 .RDataTmp3
 .RDataTmp4
+.RDataTmp5

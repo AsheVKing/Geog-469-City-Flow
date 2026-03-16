@@ -17,7 +17,7 @@ library(h3r)
 library(tmap)
 library(dplyr)
 
-h3_res = 8
+h3_res = 9
 ```
 
 ```{r}
@@ -117,5 +117,8 @@ counted_cells <- h3_nyc_data_slim %>%
 tm_shape(nynta["BoroName"])+
   tm_borders()+
   tm_shape(counted_cells)+
-  tm_polygons(fill = "count", fill_alpha = .5)
+  tm_polygons(fill = "count", 
+              fill.scale = tm_scale_intervals(n=5, 
+                                              style = 'quantile'),
+              fill_alpha = .5)
 ```

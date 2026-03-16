@@ -130,10 +130,10 @@ h3_nyc_data_slim %>%
     ## Geometry set for 1 feature 
     ## Geometry type: MULTIPOLYGON
     ## Dimension:     XY
-    ## Bounding box:  xmin: -74.26574 ymin: 40.50056 xmax: -73.69027 ymax: 40.92204
+    ## Bounding box:  xmin: -74.25786 ymin: 40.50595 xmax: -73.69597 ymax: 40.91835
     ## Geodetic CRS:  WGS 84
 
-    ## MULTIPOLYGON (((-74.26216 40.89917, -74.26411 4...
+    ## MULTIPOLYGON (((-74.14446 40.80813, -74.14228 4...
 
 ``` r
 #creating cell counts data frame
@@ -152,7 +152,10 @@ counted_cells <- h3_nyc_data_slim %>%
 tm_shape(nynta["BoroName"])+
   tm_borders()+
   tm_shape(counted_cells)+
-  tm_polygons(fill = "count", fill_alpha = .5)
+  tm_polygons(fill = "count", 
+              fill.scale = tm_scale_intervals(n=5, 
+                                              style = 'quantile'),
+              fill_alpha = .5)
 ```
 
 ![](Data-exploration_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->

@@ -148,7 +148,6 @@ counted_cells <- h3_nyc_data_slim %>%
 
 #plotting post heatmap
 #TODO use the local dataset 
-#TODO Use Jenks or Quantile distribution for the map fill
 tm_shape(nynta["BoroName"])+
   tm_borders()+
   tm_shape(counted_cells)+
@@ -159,3 +158,24 @@ tm_shape(nynta["BoroName"])+
 ```
 
 ![](Data-exploration_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+
+``` r
+#finding the number of unique cells that each user posted in throughout the day
+cells_visited <- h3_nyc_data_slim %>% 
+  group_by(u_id) %>% 
+  distinct(h3_cell, .keep_all = T) %>% 
+  mutate(n_cells_visted = n()) %>% ungroup()
+
+#Summarizing the stats of the # of unique cells visited
+cells_visited %>% 
+  distinct(u_id, .keep_all = T) %>% 
+  summarize(avg_num_cell_visted = mean(n_cells_visted),
+            max = max(n_cells_visted), 
+            min = min(n_cells_visted),
+            median = median(n_cells_visted))               
+```
+
+    ## # A tibble: 1 × 4
+    ##   avg_num_cell_visted   max   min median
+    ##                 <dbl> <int> <int>  <dbl>
+    ## 1                5.47    72     1      4

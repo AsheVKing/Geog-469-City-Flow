@@ -134,6 +134,6 @@ cells_visited %>%
   summarize(avg_num_cell_visted = mean(n_cells_visted),
             max = max(n_cells_visted), 
             min = min(n_cells_visted),
-            median = median(n_cells_visted))               
+            median = median(n_cells_visted))
 ```
 

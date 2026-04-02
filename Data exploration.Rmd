@@ -16,19 +16,22 @@ library(h3jsr)
 library(h3r)
 library(tmap)
 library(dplyr)
-
-h3_res = 9
+library(tidygraph)
+library(sfnetworks)
+library(igraph)
+library(tidyr)
+library(ggraph)
+library(mapdeck)
+h3_res = 8
 ```
 
 ```{r}
 # read in data and store in data table
-nycDataSept <- fread(file = "C:/Users/KingA/Senesitive data/twitter_na_2017-09_ny.csv.gz")
+#nycDataSept <- fread(file = "C:/Users/KingA/Senesitive data/twitter_na_2017-09_ny.csv.gz")
+nycDataSept <- fread(here("analysis/data/derived_data/twitter_with_locality.csv"))
+nycDataSept <- nycDataSept %>% filter(is_local == T)
 ```
 
-```{r}
-# explore data
-head(nycDataSept)
-```
 ```{r}
 #Cutting off first 100 rows
 sub_nyc_data <- slice_head(nycDataSept, n = 10000)
@@ -60,10 +63,6 @@ tm_shape(nynta_proj["BoroName"])+
 ```
 
 ```{r}
-```
-
-
-```{r}
 #Creating the interaction matrix for the h3 Cells
 #get the h3 Cell names
 grid_map_index <- nynta_buffer %>% 
@@ -92,7 +91,7 @@ h3_nyc_data <- nycDataSept %>%
 #selecting user post data where the user posted more than 10 times and less than 200 during study period
 h3_nyc_data_slim <- h3_nyc_data %>% 
   group_by(u_id) %>% 
-  filter(n() > 10 && n() < 200) %>%
+  filter(n() > 60 && n() < 200) %>%
   ungroup()
 
 # converting h3 cells to multipolygons
@@ -135,5 +134,80 @@ cells_visited %>%
             max = max(n_cells_visted), 
             min = min(n_cells_visted),
             median = median(n_cells_visted))
+h3_nyc_data_slim
 ```
+
+```{r}
+# Making node table
+nodes <- h3_nyc_data_slim %>% 
+  select(cell_name = h3_cell) %>% 
+  mutate(lat = cellToLatLng(cell_name)$lat, lon = cellToLatLng(cell_name)$lng) %>% 
+  distinct(cell_name, .keep_all = T)
+
+# simple feature nodes
+# sf_nodes <- nodes %>%
+#   mutate(geometry = st_centroid(cell_to_polygon(cell_name)))
+
+# Making edge table
+edges <- h3_nyc_data_slim %>% 
+  group_by(u_id) %>% 
+  expand(from = h3_cell, to = h3_cell) %>% #create a to/from col using combination of cells grouped by user id
+  ungroup() %>% 
+  select(from, to) %>% # the resulting DF had over 1mil rows with plently of duplicates
+  group_by(from, to) %>% 
+  mutate(count = n()) %>% # creating count by grouping by distinct from/to pairs
+  ungroup() %>% 
+  distinct(.keep_all = T) %>% # getting rid of duplicate rows
+  filter(from != to) %>%  # removing rows where from node == to node
+  mutate(key1 = pmin(to, from), # creating temp key cols to remove flipped duplicate rows
+         key2 = pmax(to, from)) %>%
+  distinct(key1, key2, .keep_all = TRUE) %>%   # keeping only unique key combinations
+  select(-key1, -key2)   # removing the temporary key columns
+
+#filter edges to only contain edges with a count greater than n
+edges <- edges %>% 
+  filter(count >= 50)
+
+# simple feature edges
+# sf_edges <- edges %>%
+#   rowwise() %>%
+#   mutate(
+#     geometry = st_sfc(
+#       st_linestring(
+#         rbind(
+#           st_coordinates(cell_to_point(from)),
+#           st_coordinates(cell_to_point(to))
+#         )
+#       )
+#     )
+#   ) %>%
+#   st_as_sf()
+
+
+# Making Graph
+graph <- tbl_graph(nodes = nodes, edges = edges, directed = F)
+graph <-  graph %>%
+  activate(nodes) %>%
+  mutate(degree = centrality_degree(),
+         betweenness = centrality_betweenness())
+
+graph
+
+```
+
+```{r}
+# Plot graph
+  ggraph(graph, x = lon, y = lat, layout = 'manual') +
+  geom_edge_link(aes(width = count), alpha = 0.5, color = 'lightblue')+
+  geom_node_point(aes(size = degree, color = betweenness)) + 
+  scale_size(range = c(0.1, 2))+
+  geom_node_text(aes(label = cell_name), size = 3, repel =T) +
+  scale_edge_width(range = c(0.1, 2))+
+  scale_color_viridis_c() +
+  theme_void()
+  
+```
+
+
+
 

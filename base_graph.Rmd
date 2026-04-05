@@ -1,0 +1,97 @@
+---
+title: "base_graph"
+author: "Ashe King"
+output: github_document
+---
+# loading packages and setting args
+```{r, warning=FALSE, include=FALSE}
+# initialize libraries
+library(sf)
+library(tidyverse)
+library(data.table)
+library(utils)
+library(here)
+library(h3jsr)
+library(h3r)
+library(tmap)
+library(dplyr)
+library(tidygraph)
+library(sfnetworks)
+library(igraph)
+library(tidyr)
+library(ggraph)
+library(mapdeck)
+
+#adjust these values to alter the data included in the graph output
+h3_res = 8
+min_posts = 20 
+max_posts = 600
+min_edges = 10 #The lower you go the more noisey the graph output will be 
+
+# Data input
+nycDataSept <- fread(here("analysis/data/derived_data/twitter_with_locality.csv"))
+nycDataSept <- nycDataSept %>% filter(is_local == T)
+```
+
+# Where the magic happens
+```{r}
+#Create a h3 cell index on nyc data
+h3_nyc_data <- nycDataSept %>% 
+  mutate(h3_cell = latLngToCell(lat = lat, lng = lon, resolution = h3_res)) %>% 
+  select(u_id, home, h3_cell)
+
+#selecting user post data where the user posted more than 10 times and less than 200 during study period
+h3_nyc_data_slim <- h3_nyc_data %>% 
+  group_by(u_id) %>% 
+  filter(n() > min_posts && n() < max_posts) %>%
+  ungroup()
+
+# Making node table
+nodes <- h3_nyc_data_slim %>% 
+  select(cell_name = h3_cell) %>% 
+  mutate(lat = cellToLatLng(cell_name)$lat, lon = cellToLatLng(cell_name)$lng) %>% 
+  distinct(cell_name, .keep_all = T)
+
+# Making edge table
+edges <- h3_nyc_data_slim %>% 
+  group_by(u_id) %>% 
+  expand(from = h3_cell, to = h3_cell) %>% #create a to/from col using combination of cells grouped by user id
+  ungroup() %>% 
+  select(from, to) %>% # the resulting DF had over 1mil rows with plently of duplicates
+  group_by(from, to) %>% 
+  mutate(count = n()) %>% # creating count by grouping by distinct from/to pairs
+  ungroup() %>% 
+  distinct(.keep_all = T) %>% # getting rid of duplicate rows
+  filter(from != to) %>%  # removing rows where from node == to node
+  mutate(key1 = pmin(to, from), # creating temp key cols to remove flipped duplicate rows
+         key2 = pmax(to, from)) %>%
+  distinct(key1, key2, .keep_all = TRUE) %>%   # keeping only unique key combinations
+  select(-key1, -key2)   # removing the temporary key columns
+
+#filter edges to only contain edges with a count greater than n
+edges <- edges %>% 
+  filter(count >= min_edges)
+
+
+# Making Graph
+graph <- tbl_graph(nodes = nodes, edges = edges, directed = F)
+graph <-  graph %>%
+  activate(nodes) %>%
+  mutate(degree = centrality_degree(),
+         betweenness = centrality_betweenness())
+```
+
+# Ploting the graph
+```{r}
+# Plot graph
+  ggraph(graph, x = lon, y = lat, layout = 'manual') +
+  geom_edge_link(aes(width = count), alpha = 0.5, color = 'lightblue')+
+  geom_node_point(aes(size = degree, color = betweenness)) + 
+  scale_size(range = c(0.1, 2))+
+ # geom_node_text(aes(label = cell_name), size = 3, repel =T) +
+  scale_edge_width(range = c(0.1, 2))+
+  scale_color_viridis_c() +
+  theme_void()
+```
+
+

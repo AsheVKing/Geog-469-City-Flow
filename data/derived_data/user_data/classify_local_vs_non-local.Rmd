@@ -1,0 +1,61 @@
+---
+title: "Classify local vs non-local"
+author: "James McQuilkin"
+date: "2026-03-24"
+output: html_document
+---
+
+```{r}
+#Load Packages
+library(h3jsr)
+library(sf)
+library(dplyr)
+library(readr)
+library(here)
+```
+
+```{r}
+#Load and dissolve NYC boundary
+#EPSG 2263 is NYC State Plane
+nyc_outline <- read_sf(here("data/raw_data/mapping_data/nynta2020_25d/nynta2020.shp")) %>%
+  st_make_valid() %>%
+  st_union() %>%
+  st_transform(2263)
+```
+
+```{r}
+# Load twitter data and filter by type to get exact coordinates
+twitter_path <- here("data/raw_data/twitter_data/twitter_na_2017-09_ny.csv.gz")
+
+df <- read_csv(twitter_path) %>%
+  filter(type == "ll")
+```
+
+```{r}
+# Create a lookup for unique home H3 cells
+home_lookup <- df %>%
+  distinct(home) %>%
+  mutate(geometry = h3jsr::cell_to_point(home)) %>% 
+  st_as_sf() %>% 
+  st_transform(st_crs(nyc_outline))
+
+# Determine if cells are inside NYC
+home_lookup <- home_lookup %>%
+  mutate(is_local = as.logical(st_intersects(geometry, nyc_outline, sparse = FALSE))) %>%
+  st_drop_geometry()
+```
+
+```{r}
+# Merge results and label
+df_final <- df %>%
+  left_join(home_lookup, by = "home") %>%
+  mutate(user_type = if_else(is_local, "local", "non-local"))
+
+# Export
+write_csv(df_final, here("data/derived_data/user_data/nyc_data_with_user_origin.csv"))
+```
+
+```{r}
+# Quick check
+table(df_final$user_type)
+```

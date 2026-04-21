@@ -11,4 +11,4 @@ analysis/data/raw_data/project_data/twitter_na_2017-11_ny.csv.gz
 data/raw_data/twitter_data/twitter_na_2017-09_ny.csv.gz
 data/raw_data/twitter_data/twitter_na_2017-10_ny.csv.gz
 data/raw_data/twitter_data/twitter_na_2017-11_ny.csv.gz
-data/derived_data/user_data/twitter_with_locality.csv
+data/derived_data/user_data/twitter_data_user_origin_2017-09.csv

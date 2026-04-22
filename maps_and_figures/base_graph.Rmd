@@ -29,7 +29,7 @@ max_posts = 600
 min_edges = 10 #The lower you go the more noisey the graph output will be 
 
 # Data input
-nycDataSept <- fread(here("analysis/data/derived_data/twitter_with_locality.csv"))
+nycDataSept <- fread(here("data/derived_data/user_data/nyc_data_with_user_origin.csv"))
 nycDataSept <- nycDataSept %>% filter(is_local == T)
 ```
 

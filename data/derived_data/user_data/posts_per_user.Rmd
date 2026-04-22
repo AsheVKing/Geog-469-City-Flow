@@ -1,58 +1,58 @@
-
+---
+title: "Posts Per User"
+author: "James McQuilkin"
+date: "2026-04-21"
+output: html_document
+---
 
 ```{r}
+#Load packages
 library(dplyr)
 library(readr)
 library(ggplot2)
 library(here)
+library(scales)
+```
 
+```{r}
+#Load and filter data
+df <- read_csv(here("data/raw_data/twitter_data/twitter_na_2017-09_ny.csv.gz")) %>%
+  filter(type == "ll")
+```
 
-df <- read_csv(here("analysis/data/raw_data/project_data/twitter_na_2017-09_ny.csv.gz"))
-
+```{r}
+#Aggregate
 posts_per_user <- df %>%
-  group_by(u_id) %>%
-  summarise(post_count = n())
+  count(u_id, name = "post_count")
+```
 
+```{r}
+#Summary Statistics
+summary_stats <- summary(posts_per_user$post_count)
+print(summary_stats)
+```
+
+```{r}
+#Visualization: Histogram with Log Scale
 ggplot(posts_per_user, aes(x = post_count)) +
-  geom_histogram(binwidth = 1, fill = "blue", color = "red") +
+  geom_histogram(binwidth = 0.1, fill = "blue", color = "white") + 
+  scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                labels = trans_format("log10", math_format(10^.x))) +
+  labs(
+    title = "Distribution of Posts per Account (Log Scale)",
+    x = "Number of Posts (10^x)",
+    y = "Count of Users"
+  )
+```
+
+```{r}
+#Visualization: Boxplot
+ggplot(posts_per_user, aes(x = post_count)) +
+  geom_boxplot(fill = "white", outlier.color = "red", outlier.shape = 1) +
   labs(
     title = "Posts per Account - September 2017",
-    x = "Number of Posts",
-    y = "Number of Accounts"
+    x = "Number of Posts"
   )
-
-ggplot(posts_per_user, aes(x = post_count)) +
-  geom_boxplot() +
-  labs(
-    title = "Posts per Account - September 2017",
-    x = "Number of Posts",
-    y = "Number of Accounts"
-  )
-```
-
-
-```{r}
-summary(posts_per_user$post_count)
-```
-
-
-```{r}
-
-```
-
-
-```{r}
-
-```
-
-
-```{r}
-
-```
-
-
-```{r}
-
 ```
 
 

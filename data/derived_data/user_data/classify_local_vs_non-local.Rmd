@@ -52,7 +52,7 @@ df_final <- df %>%
   mutate(user_type = if_else(is_local, "local", "non-local"))
 
 # Export
-write_csv(df_final, here("data/derived_data/user_data/nyc_data_with_user_origin.csv"))
+write_csv(df_final, here("data/derived_data/user_data/twitter_data_user_origin_2017-09.csv"))
 ```
 
 ```{r}

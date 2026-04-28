@@ -12,6 +12,7 @@ library(sf)
 library(dplyr)
 library(readr)
 library(here)
+library(data.table)
 ```
 
 ```{r}
@@ -27,7 +28,7 @@ nyc_outline <- read_sf(here("data/raw_data/mapping_data/nynta2020_25d/nynta2020.
 # Load twitter data and filter by type to get exact coordinates
 twitter_path <- here("data/raw_data/twitter_data/twitter_na_2017-09_ny.csv.gz")
 
-df <- read_csv(twitter_path) %>%
+df <- fread(twitter_path) %>%
   filter(type == "ll")
 ```
 

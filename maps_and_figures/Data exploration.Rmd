@@ -27,7 +27,6 @@ h3_res = 8
 
 ```{r}
 # read in data and store in data table
-#nycDataSept <- fread(file = "C:/Users/KingA/Senesitive data/twitter_na_2017-09_ny.csv.gz")
 nycDataSept <- fread(here("analysis/data/derived_data/twitter_with_locality.csv"))
 nycDataSept <- nycDataSept %>% filter(is_local == T)
 ```

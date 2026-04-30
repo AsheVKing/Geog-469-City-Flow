@@ -18,7 +18,7 @@ library(ggplot2)
 ## Plotting 2020 Neighborhood Tabulation Areas NYC
 
 ```{r}
-nynta <- read_sf(here("project_data/nynta2020_25d/nynta2020.shp"))
+nynta <- read_sf(here("data/raw_data/mapping_data/nynta2020_25d/nynta2020.shp"))
 plot(nynta["BoroName"], key.width = lcm(4.06))
 ```
 ## crs and Projection testing

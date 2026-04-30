@@ -16,7 +16,6 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(sf)
 library(tidyverse)
 library(here)
-library(ggplot2)
 ```
 
 #Generate Basic Choropleth Map Colored by Borough
@@ -38,29 +37,24 @@ ggplot(data = nynta) +
 
 #Creating a Theoretical Grid for Analysis
 ```{r}
-# 1. Create a hexagonal grid across the entire extent of the NYC layer
+# 1. Create a hexagonal grid across the extent of the NYC layer
 grid_map <- nynta %>% 
-  st_make_grid(cellsize = 600, square = FALSE) %>% 
+  st_make_grid(cellsize = 5280, square = FALSE) %>% # Note: cellsize is in feet for ESPG:2263
   st_sf()
 
-# 2. Clip the grid to the NYC coastline
-# We use st_union(nynta) to dissolve borough lines so hexes only clip at the exterior edge
+# 2. Clip the grid to the NYC outline
+#Use st_intersection to keep only the parts of the hexes inside the NYC boundary
 grid_map_clipped <- st_intersection(grid_map, st_union(nynta))
 
 # 3. Final Visualization
 ggplot() + 
-  geom_sf(data = nynta_proj, aes(fill = BoroName), color = "white", alpha = 0.7) + 
-  geom_sf(data = grid_map_clipped, fill = NA, color = "black", size = 0.05) +
+  geom_sf(data = nynta, aes(fill = BoroName), color = "white", alpha = 0.7) + 
+  geom_sf(data = grid_map_clipped, fill = NA, color = "black", linewidth = 0.05) +
   labs(
     title = "NYC Hexagonal Analysis Grid",
     x = "Longitude",
     y = "Latitude",
     fill = "Borough"
   ) +
-  theme_minimal() +
-  theme(
-    legend.position = "bottom", 
-    plot.title = element_text(face = "bold", size = 16),
-    panel.grid.major = element_line(color = "gray90", linetype = "dashed")
-  )
+  theme_minimal()
 ```

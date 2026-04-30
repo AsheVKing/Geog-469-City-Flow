@@ -23,11 +23,12 @@ library(tidyr)
 library(ggraph)
 library(mapdeck)
 h3_res = 8
+crs=2263
 ```
 
 ```{r}
 # read in data and store in data table
-nycDataSept <- fread(here("analysis/data/derived_data/twitter_with_locality.csv"))
+nycDataSept <- fread(here(here("data/derived_data/user_data/twitter_data_user_origin_2017-09.csv")))
 nycDataSept <- nycDataSept %>% filter(is_local == T)
 ```
 
@@ -37,7 +38,7 @@ sub_nyc_data <- slice_head(nycDataSept, n = 10000)
 # Extracting useful data and converting it into a simple feature
 sf_nyc_data <- sub_nyc_data %>% 
   select(id, u_id, home, lon, lat) %>% 
-  st_as_sf(coords = c("lon", "lat"), crs = 4326)
+  st_as_sf(coords = c("lon", "lat"), crs = crs)
 # plotting the frist 100 posts
 ggplot() +
   geom_sf(data = sf_nyc_data["u_id"])
@@ -45,8 +46,8 @@ ggplot() +
 
 ```{r}
 # Setting up basemap
-nynta <- read_sf(here("analysis/data/raw_data/nynta2020_25d/nynta2020.shp"))
-nynta_proj <- st_transform(nynta, crs = 6347)
+nynta <- read_sf(here("data/raw_data/mapping_data/nynta2020_25d/nynta2020.shp"))
+nynta_proj <- st_transform(nynta, crs = crs)
 #creating a buffer so these is less edges being left out of h3 grid
 nynta_buffer <- nynta_proj["BoroName"] %>% 
   st_buffer(dist = 100)
@@ -110,7 +111,6 @@ counted_cells <- h3_nyc_data_slim %>%
   st_sf()
 
 #plotting post heatmap
-#TODO use the local dataset 
 tm_shape(nynta["BoroName"])+
   tm_borders()+
   tm_shape(counted_cells)+
@@ -137,6 +137,13 @@ h3_nyc_data_slim
 ```
 
 ```{r}
+# Filtering visited nodes
+h3_nyc_data_slim <- h3_nyc_data_slim %>% 
+  mutate(geometry = cell_to_point(h3_cell)) %>% 
+  st_as_sf() %>%
+  st_transform(crs=crs) %>% 
+  st_intersection(nynta_proj["BoroName"])
+
 # Making node table
 nodes <- h3_nyc_data_slim %>% 
   select(cell_name = h3_cell) %>% 

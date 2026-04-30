@@ -5,8 +5,7 @@ Ashe King
 
 ``` r
 # read in data and store in data table
-#nycDataSept <- fread(file = "C:/Users/KingA/Senesitive data/twitter_na_2017-09_ny.csv.gz")
-nycDataSept <- fread(here("analysis/data/derived_data/twitter_with_locality.csv"))
+nycDataSept <- fread(here(here("data/derived_data/user_data/twitter_data_user_origin_2017-09.csv")))
 nycDataSept <- nycDataSept %>% filter(is_local == T)
 ```
 
@@ -16,7 +15,7 @@ sub_nyc_data <- slice_head(nycDataSept, n = 10000)
 # Extracting useful data and converting it into a simple feature
 sf_nyc_data <- sub_nyc_data %>% 
   select(id, u_id, home, lon, lat) %>% 
-  st_as_sf(coords = c("lon", "lat"), crs = 4326)
+  st_as_sf(coords = c("lon", "lat"), crs = crs)
 # plotting the frist 100 posts
 ggplot() +
   geom_sf(data = sf_nyc_data["u_id"])
@@ -26,8 +25,8 @@ ggplot() +
 
 ``` r
 # Setting up basemap
-nynta <- read_sf(here("analysis/data/raw_data/nynta2020_25d/nynta2020.shp"))
-nynta_proj <- st_transform(nynta, crs = 6347)
+nynta <- read_sf(here("data/raw_data/mapping_data/nynta2020_25d/nynta2020.shp"))
+nynta_proj <- st_transform(nynta, crs = crs)
 #creating a buffer so these is less edges being left out of h3 grid
 nynta_buffer <- nynta_proj["BoroName"] %>% 
   st_buffer(dist = 100)
@@ -102,10 +101,10 @@ h3_nyc_data_slim %>%
     ## Geometry set for 1 feature 
     ## Geometry type: MULTIPOLYGON
     ## Dimension:     XY
-    ## Bounding box:  xmin: -74.26159 ymin: 40.50143 xmax: -73.69145 ymax: 40.92119
+    ## Bounding box:  xmin: -74.26075 ymin: 40.50056 xmax: -73.69381 ymax: 40.92119
     ## Geodetic CRS:  WGS 84
 
-    ## MULTIPOLYGON (((-74.10315 40.64012, -74.10951 4...
+    ## MULTIPOLYGON (((-73.88759 40.70056, -73.88122 4...
 
 ``` r
 #creating cell counts data frame
@@ -119,7 +118,6 @@ counted_cells <- h3_nyc_data_slim %>%
   st_sf()
 
 #plotting post heatmap
-#TODO use the local dataset 
 tm_shape(nynta["BoroName"])+
   tm_borders()+
   tm_shape(counted_cells)+
@@ -150,26 +148,38 @@ cells_visited %>%
     ## # A tibble: 1 × 4
     ##   avg_num_cell_visted   max   min median
     ##                 <dbl> <int> <int>  <int>
-    ## 1                10.0    69     1      7
+    ## 1                12.0    47     1     11
 
 ``` r
 h3_nyc_data_slim
 ```
 
-    ## # A tibble: 368,454 × 3
+    ## # A tibble: 35,148 × 3
     ##          u_id home            h3_cell        
-    ##         <dbl> <chr>           <chr>          
-    ##  1  138559840 8a2a100d22affff 882a107665fffff
-    ##  2  314326954 8a2a100f34f7fff 882a100895fffff
-    ##  3  443188522 8a2a107292e7fff 882a107665fffff
-    ##  4 2595156171 8a2a100db5b7fff 882a107665fffff
-    ##  5  167649402 8a2a100aa807fff 882a100895fffff
-    ##  6  156426927 8a2a1005a28ffff 882a100895fffff
-    ##  7   61429473 8a2a1075422ffff 882a1072c7fffff
-    ##  8   34280840 8a2a1072c057fff 882a1072c1fffff
-    ##  9    6492922 8a2a103a642ffff 882a100e3bfffff
-    ## 10   23729800 8a2a100f374ffff 882a100cd1fffff
-    ## # ℹ 368,444 more rows
+    ##       <int64> <chr>           <chr>          
+    ##  1  106963663 8a2a100e016ffff 882a1072cdfffff
+    ##  2   26435030 8a2a100de32ffff 882a100c6bfffff
+    ##  3   61429473 8a2a1075422ffff 882a1072c7fffff
+    ##  4   34280840 8a2a1072c057fff 882a1072c1fffff
+    ##  5   22320796 8a2a100f0687fff 882a100f07fffff
+    ##  6 2893486973 8a2a100dc19ffff 882a107259fffff
+    ##  7 3192129959 8a2a1077581ffff 882a1072c3fffff
+    ##  8   41022908 8a2a1072c66ffff 882a100a19fffff
+    ##  9  249895454 8a2a100d002ffff 882a100d01fffff
+    ## 10   30672215 8a2a100d359ffff 882a100d35fffff
+    ## # ℹ 35,138 more rows
+
+``` r
+# Filtering visited nodes
+h3_nyc_data_slim <- h3_nyc_data_slim %>% 
+  mutate(geometry = cell_to_point(h3_cell)) %>% 
+  st_as_sf() %>%
+  st_transform(crs=crs) %>% 
+  st_intersection(nynta_proj["BoroName"])
+```
+
+    ## Warning: attribute variables are assumed to be spatially constant throughout
+    ## all geometries
 
 ``` r
 # Making node table
@@ -200,7 +210,7 @@ edges <- h3_nyc_data_slim %>%
 
 #filter edges to only contain edges with a count greater than n
 edges <- edges %>% 
-  filter(count >= 50)
+  filter(count >= 10)
 
 # simple feature edges
 # sf_edges <- edges %>%
@@ -228,32 +238,32 @@ graph <-  graph %>%
 graph
 ```
 
-    ## # A tbl_graph: 1240 nodes and 737 edges
+    ## # A tbl_graph: 520 nodes and 383 edges
     ## #
-    ## # An undirected simple graph with 1149 components
+    ## # An undirected simple graph with 451 components
     ## #
-    ## # Node Data: 1,240 × 5 (active)
-    ##    cell_name         lat   lon degree betweenness
-    ##    <chr>           <dbl> <dbl>  <dbl>       <dbl>
-    ##  1 882a107665fffff  40.7 -73.9     58       411. 
-    ##  2 882a100895fffff  40.8 -74.0     65       709. 
-    ##  3 882a1072c7fffff  40.7 -74.0     83      1687. 
-    ##  4 882a1072c1fffff  40.7 -74.0     41        33.0
-    ##  5 882a100e3bfffff  40.7 -73.8      0         0  
-    ##  6 882a100cd1fffff  40.7 -73.8     21        13.7
-    ##  7 882a107057fffff  40.7 -74.1      2         0  
-    ##  8 882a100dedfffff  40.7 -74.0     14         0  
-    ##  9 882a107411fffff  40.6 -74.0      0         0  
-    ## 10 882a10088bfffff  40.8 -74.0      0         0  
-    ## # ℹ 1,230 more rows
+    ## # Node Data: 520 × 6 (active)
+    ##    cell_name                       geometry   lat   lon degree betweenness
+    ##    <chr>           <POINT [US_survey_foot]> <dbl> <dbl>  <dbl>       <dbl>
+    ##  1 882a100d15fffff        (997348 204153.2)  40.7 -74.0      0           0
+    ##  2 882a100d03fffff      (996669.7 207017.9)  40.7 -74.0      0           0
+    ##  3 882a100d1dfffff      (999659.8 206161.7)  40.7 -73.9      0           0
+    ##  4 882a100d11fffff       (1000338 203297.1)  40.7 -73.9      0           0
+    ##  5 882a100de5fffff      (993403.4 197272.5)  40.7 -74.0      0           0
+    ##  6 882a100d17fffff      (998026.3 201288.7)  40.7 -74.0      0           0
+    ##  7 882a100d3bfffff      (995036.4 202144.8)  40.7 -74.0      4           0
+    ##  8 882a100dedfffff      (995714.8 199280.5)  40.7 -74.0      2           0
+    ##  9 882a100de1fffff      (996393.1 196416.6)  40.7 -74.0      0           0
+    ## 10 882a100dc5fffff       (1001694 197568.6)  40.7 -73.9      3           0
+    ## # ℹ 510 more rows
     ## #
-    ## # Edge Data: 737 × 3
+    ## # Edge Data: 383 × 3
     ##    from    to count
     ##   <int> <int> <int>
-    ## 1     2    20   381
-    ## 2     6    20   173
-    ## 3     1    20   194
-    ## # ℹ 734 more rows
+    ## 1   190   252    15
+    ## 2   252   305    29
+    ## 3   252   337    11
+    ## # ℹ 380 more rows
 
 ``` r
 # Plot graph
@@ -261,7 +271,7 @@ graph
   geom_edge_link(aes(width = count), alpha = 0.5, color = 'lightblue')+
   geom_node_point(aes(size = degree, color = betweenness)) + 
   scale_size(range = c(0.1, 2))+
-  geom_node_text(aes(label = cell_name), size = 3, repel =T) +
+ # geom_node_text(aes(label = cell_name), size = 3, repel =T) +
   scale_edge_width(range = c(0.1, 2))+
   scale_color_viridis_c() +
   theme_void()

@@ -47,7 +47,7 @@ nycDataSept <- df_final %>% filter(is_local == T)
 
 ``` r
 # Operating on n rows
-sub_nyc_data <- slice_head(nycDataSept, n = 50000)
+sub_nyc_data <- slice_head(nycDataSept, n = 100000)
 
 # Extracting necessary data and converting it into a simple feature
 sf_nyc_data <- sub_nyc_data %>% 
@@ -117,7 +117,7 @@ joint_neighborhoods_norm = sf_nyc_data |>
     
     !is.na(to),                         # Exclude edges to or from locations outside
                                         #    the neighborhoods
-    weight >= 2,                        # Minimum weighted count of posts for a
+    weight > 1,                        # Minimum weighted count of posts for a
                                         #    a neighborhood to be considered
     to != from,                         # Exclude posts in the same neighborhood as
                                         #    the user's home
@@ -206,3 +206,34 @@ graph <-  graph %>%
 ```
 
 ![](gravity_model_files/figure-gfm/Graph_Visualization-1.png)<!-- -->
+
+``` r
+# Find neighborhoods that have the highest and lowest
+#  average residual in the OLS inflow model
+average_neighborhood_weights = joint_neighborhoods_norm |>
+    group_by(to) |>
+    summarize(mean_weight = mean(weight), .groups = "drop")
+nynta_weights = nynta_proj |>
+  left_join(average_neighborhood_weights, by=c("NTAName" = "to")) |>
+  filter(!is.na(mean_weight))
+
+high_weight_neighborhoods = nynta_weights |>
+    slice_max(order_by = mean_weight, n = 20)
+low_weight_neighborhoods = nynta_weights |>
+    slice_min(order_by = mean_weight, n = 20)
+
+tm_shape(nynta_proj) +
+  tm_polygons(fill = "gray96") +
+  
+  tm_shape(filter(nynta_weights, mean_weight > 0)) +
+  tm_polygons(fill = "#eeddcc") +
+  tm_shape(filter(nynta_weights, mean_weight < 0)) +
+  tm_polygons(fill = "#ddd9ff") +
+  
+  tm_shape(high_weight_neighborhoods) +
+  tm_polygons(fill = "orange") +
+  tm_shape(low_weight_neighborhoods) +
+  tm_polygons(fill = "navy")
+```
+
+![](gravity_model_files/figure-gfm/Residual_Choropleth-1.png)<!-- -->

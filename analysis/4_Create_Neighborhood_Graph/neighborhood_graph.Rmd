@@ -138,15 +138,26 @@ nynta_proj = nynta_proj |>
 nynta_proj = nynta_proj |>
   left_join(user_neighborhoods_norm, 
             by="NTAName", suffix = c("_to", "_from"))
+nynta_proj = nynta_proj |>
+  mutate(sum_diff = sum_to - sum_from)
 
 ```
 
 ```{r Choropleth_Visualizations}
 
+# Mapping number of (normalized) posts by neighborhood
 tm_shape(nynta_proj)+
   tm_polygons(fill = "sum_to", style = "quantile")
+
+# Mapping number of users by neighborhood
 tm_shape(nynta_proj)+
   tm_polygons(fill = "sum_from", style = "quantile")
+
+# Mapping differential between posts and users by neighborhood
+#   This visualizes which neighborhoods have more inflow (ie that containing JFK Airport),
+#   and which have users that tend to tweet in other neighborhoods (ie Upper Manhattan)
+tm_shape(nynta_proj)+
+  tm_polygons(fill = "sum_diff", style = "quantile")
 
 ```
 

@@ -192,7 +192,7 @@ names(joint_neighborhoods_norm)[names(joint_neighborhoods_norm) == "sum"] = "use
 
 # ...and repeated for the destination neighborhoods
 joint_neighborhoods_norm = joint_neighborhoods_norm |>
-  left_join(user_neighborhoods_norm, by = c("to" = "NTAName"))
+  left_join(post_neighborhoods_norm, by = c("to" = "NTAName"))
 names(joint_neighborhoods_norm)[names(joint_neighborhoods_norm) == "sum"] = "users_to"
 
 # These are the population terms in the gravity model.

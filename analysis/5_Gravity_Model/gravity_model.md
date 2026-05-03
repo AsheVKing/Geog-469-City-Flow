@@ -117,7 +117,7 @@ joint_neighborhoods_norm = sf_nyc_data |>
     
     !is.na(to),                         # Exclude edges to or from locations outside
                                         #    the neighborhoods
-    weight > 1,                        # Minimum weighted count of posts for a
+    weight > 1,                         # Minimum weighted count of posts for a
                                         #    a neighborhood to be considered
     to != from,                         # Exclude posts in the same neighborhood as
                                         #    the user's home
@@ -125,6 +125,9 @@ joint_neighborhoods_norm = sf_nyc_data |>
     to != "Tribeca-Civic Center"        #    suspiciously over-represented neighborhood
     
     ) |>
+  # The pair of neighborhoods below has an exceedingly and abnormally large volume of flow,
+  #   but only in one direction, which would seem to suggest error in the data
+  #   rather than an actual relationship; thus, they are being filtered out as well
   filter(
     from != "Bedford-Stuyvesant (East)" | to != "Bedford-Stuyvesant (West)"
   ) |>
@@ -147,16 +150,22 @@ nynta_points = nynta_points |>
 ```
 
 ``` r
+# Adding the number of users with a home in the origin neighborhood of each edge
+#  as a column in the edge data frame
 joint_neighborhoods_norm = joint_neighborhoods_norm |>
   left_join(user_neighborhoods_norm, by = c("from" = "NTAName"))
 names(joint_neighborhoods_norm)[names(joint_neighborhoods_norm) == "sum"] = "users_from"
 
+# ...and repeated for the destination neighborhoods
 joint_neighborhoods_norm = joint_neighborhoods_norm |>
   left_join(user_neighborhoods_norm, by = c("to" = "NTAName"))
 names(joint_neighborhoods_norm)[names(joint_neighborhoods_norm) == "sum"] = "users_to"
+
+# These are the population terms in the gravity model.
 ```
 
 ``` r
+# Creating a matrix of approximate distances between neighborhoods
 distance_matrix = nynta_proj |>
   st_centroid() |>
   st_distance()
@@ -165,11 +174,15 @@ distance_matrix = nynta_proj |>
     ## Warning: st_centroid assumes attributes are constant over geometries
 
 ``` r
+# Creating a named list of neighborhood-index pairs to improve the time efficiency
+#  of looking up a distance in the above matrix given neighborhood names
 neighborhood_index_list = as.list(1:nrow(nynta_points)) |>
   setNames(nynta_points$NTAName)
 
+# Create an empty distance column in the edge data frame...
 joint_neighborhoods_norm = joint_neighborhoods_norm |>
   mutate(distance_m = 0)
+# ...and fill it with the distances between the to and from nodes in each pair
 for (n in 1:nrow(joint_neighborhoods_norm)) {
   joint_neighborhoods_norm[n,"distance_m"] = as.double(distance_matrix[
     neighborhood_index_list[[ as.character(joint_neighborhoods_norm[n,"from"]) ]],
@@ -177,14 +190,20 @@ for (n in 1:nrow(joint_neighborhoods_norm)) {
   ])
 }
 
+# Remove rows with no users in the destination node
 joint_neighborhoods_norm = joint_neighborhoods_norm |>
   filter(!is.na(users_to))
 ```
 
 ``` r
+# A logarithm is applied to both sides of the gravity model so that
+#  the exponent for the distance term can be calculated
+#  as a coefficient.
 ols = lm( log(weight) ~ log(users_from) + log(users_to) + log(distance_m),
         data = joint_neighborhoods_norm)
 joint_neighborhoods_norm$weight = ols$residuals
+ # The weight of a neighborhood is how much it exceeds (or falls short of)
+ #  the OLS regression of the gravity model.
 ```
 
 ``` r
@@ -195,7 +214,7 @@ graph <-  graph %>%
   mutate(degree = centrality_degree(),
          betweenness = centrality_betweenness())
 
-# Plot graph
+# Plotting the graph
   ggraph(graph, x = x, y = y, layout = 'manual') +
   geom_sf(data = nynta_proj, inherit.aes = F, fill = "#feeded67", color = "#22222222") +
   geom_edge_link(aes(alpha = abs(weight/2)^2, width = abs(weight/2)^1.5, color = weight))+
@@ -208,30 +227,38 @@ graph <-  graph %>%
 ![](gravity_model_files/figure-gfm/Graph_Visualization-1.png)<!-- -->
 
 ``` r
-# Find neighborhoods that have the highest and lowest
-#  average residual in the OLS inflow model
+# Calculate the average residual for each neighborhood...
 average_neighborhood_weights = joint_neighborhoods_norm |>
     group_by(to) |>
     summarize(mean_weight = mean(weight), .groups = "drop")
+# ...and join it to a copy of the neighborhoods polygon sf object
 nynta_weights = nynta_proj |>
   left_join(average_neighborhood_weights, by=c("NTAName" = "to")) |>
   filter(!is.na(mean_weight))
 
+# Find neighborhoods that have the highest and lowest
+#  average residual in the OLS inflow model
 high_weight_neighborhoods = nynta_weights |>
     slice_max(order_by = mean_weight, n = 20)
 low_weight_neighborhoods = nynta_weights |>
     slice_min(order_by = mean_weight, n = 20)
 
+# Mapping how neighborhoods copmare to the OLS gravity model
 tm_shape(nynta_proj) +
+  # Base layer of all neighborhoods (including those with insufficient data)
   tm_polygons(fill = "gray96") +
   
+  # Add all neighborhoods that are higher...
   tm_shape(filter(nynta_weights, mean_weight > 0)) +
   tm_polygons(fill = "#eeddcc") +
+  # ...or lower than the model on average
   tm_shape(filter(nynta_weights, mean_weight < 0)) +
   tm_polygons(fill = "#ddd9ff") +
   
+  # Add the n neighborhoods with the highest...
   tm_shape(high_weight_neighborhoods) +
   tm_polygons(fill = "orange") +
+  # ...and lowest average residuals
   tm_shape(low_weight_neighborhoods) +
   tm_polygons(fill = "navy")
 ```

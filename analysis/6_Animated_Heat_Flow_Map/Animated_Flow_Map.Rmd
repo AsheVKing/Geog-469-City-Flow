@@ -1,0 +1,142 @@
+---
+title: "Animated_Flow_Twitter_Map"
+author: "Ben Vales"
+date: "2026-04-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+Sys.setenv(VALES_DATA_PATH = "C:/Users/beval/OneDrive/Desktop/469/Geog-469-City-Flow/data/derived_data")
+base_path <- Sys.getenv("VALES_DATA_PATH")
+```
+
+
+```{r}
+#loading packages
+library(mapdeck)
+library(here)
+library(dplyr)
+library(h3r)
+library(h3jsr)
+library(readr)
+library(sf)
+library(scales)
+library(usethis)
+```
+
+```{r}
+
+
+#load files needed to create map (but secret!)
+base_path <- Sys.getenv("VALES_DATA_PATH")
+
+# nodes: one row per H3 hexagonal cell, with cell name + centroid lat/lon
+# edges: directed flow counts between pairs of H3 cells (from → to)
+
+nodes <- read_csv(file.path(base_path, "h3_nodes_upd.csv"))
+edges <- read_csv(file.path(base_path, "h3_edges_upd.csv"))
+
+```
+
+
+
+```{r}
+#Joins node coordinates onto the edge table so each edge row carries both its origin and destination lat/lon — the format mapdeck expects for arcs.
+edges <- edges %>%
+  select(from, to, count) %>%   #Drop unused columns; retain only the origin 
+                                #cell, destination cell,and the flow count between them.
+  left_join(nodes,by = c("from" = "cell_name")) %>% 
+  #Left-join nodes on the origin cell ("from") to attach origin coords.
+  rename(from_lat = lat, from_lon = lon) %>% #rename coulums to from_lat/from_long
+
+  left_join(nodes, by = c("to" = "cell_name")) %>%
+  rename(to_lat = lat, to_lon = lon) #Left-join nodes again on the destination cell ("to") for destination coords.
+```
+
+
+```{r}
+#mapdeck (no filtering)
+#calls map deck for base map
+mapdeck( 
+  token = Sys.getenv("MAPBOX_TOKEN"), #loads API mapbox token
+  style = mapdeck_style('dark'), #chooses dark style
+  pitch = 45 #pitch of map
+) %>% 
+  #creates the arcs
+  add_animated_arc(
+    data = edges, #loads data
+    origin = c("from_lon", "from_lat"), # [longitude, latitude] of arc start
+    destination = c("to_lon", "to_lat"), # [longitude, latitude] of arc end
+     stroke_from = "#00FFCC", #sets orgin color as teal
+    stroke_to = "#FF00FF", #sets destination color as pink
+    stroke_from_opacity = 255, #sets stroke opacity from 0 (thick) to 255 (very thin)
+    stroke_to_opacity = 255, #sets stroke opacity to 255 (very thin)
+  )
+
+
+```
+
+```{r}
+#heat map
+
+# Aggregate total inbound flow per destination cell
+node_heat <- edges %>%
+  group_by(to) %>%                              # group by destination cell 
+  summarise(total_count = sum(count, na.rm = TRUE)) %>% # sum all incoming flow counts per cell;
+# na.rm = TRUE ignores missing values
+  
+# attach lat/lon from nodes table so each destination cell has coordinates for mapping
+  left_join(nodes, by = c("to" = "cell_name"))      
+
+# Build heatmap
+inbound_heatmap <- mapdeck(
+  token = Sys.getenv("MAPBOX_TOKEN"),                    # loads Mapbox API token from .Renviron
+  style = mapdeck_style('dark'),                         # dark basemap style
+  pitch = 0                                              # flat (top-down) view
+) %>%
+  add_heatmap(
+    data          = node_heat,             # inbound aggregated data
+    lat           = "lat",                 # latitude column from nodes
+    lon           = "lon",                # longitude column from nodes
+    weight        = "total_count",        # intensity driven by total data
+    radius_pixels = 60,                  # how far each point "bleeds" — larger = smoother
+    intensity     = 1,                  # global multiplier on all weight values
+    threshold     = 0.05                # hides points below 5% of max weight (removes noise)
+  )
+
+inbound_heatmap           
+```
+
+```{r}
+#Arc-Map (filtered to highlight highest concentrations of movements)
+
+# Filter Logic (only top 5% of areas with highest travel data get flagged)
+edges_filtered <- edges %>%
+  filter(count > quantile(count, 0.95, na.rm = TRUE)) 
+
+#plotting
+
+mapdeck( #calls basemap
+  token = Sys.getenv("MAPBOX_TOKEN"), #loads mapbox token
+  style = 'mapbox://styles/mapbox/dark-v9', #chooses style
+  pitch = 45, #sets the angle for map viewing
+) %>%
+  #adds the arcs
+  add_animated_arc(
+    data = edges_filtered,  #loads filtered data
+    origin = c("from_lon", "from_lat"), #starting coordinates (their "home")
+    destination = c("to_lon", "to_lat"), #end-point coordinates (where they are traveling too)
+    stroke_width = 1.5, #sets stroke width
+    stroke_from = "#00FFCC", #Gradient Start: The color at the 'origin' point (Hex= Teal)
+    stroke_to = "#FF00FF",   #Gradient End: The color at the 'origin' point (Hex= pink)
+    stroke_from_opacity = 120, #Controls transparency of stroke_from
+    stroke_to_opacity = 120, ##Controls transparency of stroke_to
+    trail_length = 0.5,     #The proportion of the arc that is lit up at any one time (0 to 1)
+    animation_speed = 0.1   #How fast the 'pulse' moves from origin to destination
+  )
+
+#save output
+
+```
+

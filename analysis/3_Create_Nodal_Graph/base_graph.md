@@ -1,46 +1,10 @@
----
-title: "base_graph"
-author: "Ashe King"
-output: github_document
----
-
-```{r, warning=FALSE, include=FALSE}
-# initialize libraries
-library(sf)
-library(tidyverse)
-library(data.table)
-library(utils)
-library(here)
-library(h3jsr)
-library(h3r)
-library(tmap)
-library(dplyr)
-library(tidygraph)
-library(sfnetworks)
-library(igraph)
-library(tidyr)
-library(ggraph)
-library(mapdeck)
-library(visNetwork)
-library(leaflet)
-library(patchwork)
-
-#adjust these values to alter the data included in the graph output
-h3_res = 8
-min_posts = 20 
-max_posts = 600
-min_edges = 10 #The lower you go the more noisey the graph output will be 
-crs=2263
-
-# Data input
-nycDataSept <- fread(here("data/derived_data/user_data/twitter_data_user_origin_2017-09.csv"))
-nycDataSept <- nycDataSept %>% filter(is_local == T)
-nynta <- read_sf(here("data/raw_data/mapping_data/nynta2020_25d/nynta2020.shp"))
-nynta_proj <- st_transform(nynta, crs = crs)
-```
+base_graph
+================
+Ashe King
 
 # Data transformation
-```{r, warning=False}
+
+``` r
 #Create a h3 cell index on nyc data
 h3_nyc_data <- nycDataSept %>% 
   mutate(h3_cell = latLngToCell(lat = lat, lng = lon, resolution = h3_res), home = get_parent(home, res = h3_res)) %>% 
@@ -52,7 +16,12 @@ h3_nyc_data <- h3_nyc_data %>%
   st_as_sf() %>%
   st_transform(crs=crs) %>% 
   st_intersection(nynta_proj["BoroName"])
+```
 
+    ## Warning: attribute variables are assumed to be spatially constant throughout
+    ## all geometries
+
+``` r
 #Save geom
 h3_geom <- h3_nyc_data %>% 
   select(h3_cell, geometry)
@@ -122,7 +91,8 @@ graph <-  graph %>%
 ```
 
 # Ploting the graph
-```{r}
+
+``` r
 # Plot graph
 basemap <- ggplot(nynta_proj) +
   geom_sf()
@@ -137,12 +107,12 @@ vis_1  <- ggraph(graph, x = lon, y = lat, layout = 'manual') +
 
 plot(basemap + vis_1)
 ```
-#Solo network graph visualization
-```{r}
+
+![](base_graph_files/figure-gfm/unnamed-chunk-3-1.png)<!-- --> \#Solo
+network graph visualization
+
+``` r
 plot(vis_1)
 ```
 
-
-
-
-
+![](base_graph_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->

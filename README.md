@@ -25,16 +25,12 @@ Team Members: Ashe King, James McQuilkin, Chimaera Todd, Ben Vales, Daniel Meyer
 └── 3_Final_Outputs             # Final visualizations used in report/presentation
 ```
 
-## Abstract
+## Intro
+      NYC has the most diversity of transit systems of any city in the United States containing subway lines, citibikes, 
+  taxis, rideshares, buses, cable cars, and ferries.
 
+## Project Overview
 
-## Methodology
-
-
-## Analysis
-
-
-## Conclusion
 
 
 

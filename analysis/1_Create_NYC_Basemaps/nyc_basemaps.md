@@ -1,22 +1,13 @@
----
-title: "Basemap for NYC"
-author: "James McQuilkin"
-date: "2026-04-30"
-output: github_document
----
+Basemap for NYC
+================
+James McQuilkin
+2026-04-30
 
-#Load Packages
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+\#Load Packages
 
-library(sf)
-library(tidyverse)
-library(here)
-library(ggplot2)
-```
+\#Generate Basic Choropleth Map Colored by Borough
 
-#Generate Basic Choropleth Map Colored by Borough
-```{r}
+``` r
 # Import the shapefile, transform to NYC State Plane
 nynta <- read_sf(here("data/raw_data/mapping_data/nynta2020_25d/nynta2020.shp")) %>% 
   st_transform(2263)
@@ -31,3 +22,5 @@ ggplot(data = nynta) +
   ) +
   theme_minimal()
 ```
+
+![](nyc_basemaps_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->

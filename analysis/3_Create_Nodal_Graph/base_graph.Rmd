@@ -112,6 +112,8 @@ edges <- edges %>%
   filter(home != "882a1072c7fffff" & h3_cell != "882a1072c7fffff") %>% 
   rename(from = home, to = h3_cell)
 
+nodes %>% write_csv(file = here("data/derived_data/nodes_and_edge_data/nodes"))
+edges %>% write_csv(file = here("data/derived_data/nodes_and_edge_data/edges"))
 
 # Making Graph
 graph <- tbl_graph(nodes = nodes, edges = edges, directed = T)

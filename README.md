@@ -26,8 +26,9 @@ Team Members: Ashe King, James McQuilkin, Chimaera Todd, Ben Vales, Daniel Meyer
 ```
 
 ## Intro
-      NYC has the most diversity of transit systems of any city in the United States containing subway lines, citibikes, 
-  taxis, rideshares, buses, cable cars, and ferries.
+      NYC has the most diversity of transit systems of any city in the United States containing subway lines, citi bikes, 
+  taxis, ride shares, buses, cable cars, and ferries.The diversity of transportation allows for quick multimodal transit
+  across the city 
 
 ## Project Overview
 

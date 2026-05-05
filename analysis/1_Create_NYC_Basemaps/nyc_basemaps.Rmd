@@ -2,7 +2,6 @@
 title: "Basemap for NYC"
 author: "James McQuilkin"
 date: "2026-04-30"
-output: html_document
 ---
 
 #Load Packages

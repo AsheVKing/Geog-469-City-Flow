@@ -16,12 +16,7 @@ h3_nyc_data <- h3_nyc_data %>%
   st_as_sf() %>%
   st_transform(crs=crs) %>% 
   st_intersection(nynta_proj["BoroName"])
-```
 
-    ## Warning: attribute variables are assumed to be spatially constant throughout
-    ## all geometries
-
-``` r
 #Save geom
 h3_geom <- h3_nyc_data %>% 
   select(h3_cell, geometry)

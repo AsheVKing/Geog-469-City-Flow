@@ -17,7 +17,7 @@ nynta_proj <- st_transform(nynta, crs = 4326)
 
 ``` r
 # Load twitter data and filter by type to get exact coordinates
-twitter_path <- "C:/Users/ldmey/Downloads/469_proj_data/twitter_na_2017-09_ny.csv"
+twitter_path <- here("data/raw_data/twitter_data/twitter_na_2017-09_ny.csv.gz")
 df <- fread(twitter_path) %>%
   filter(type == "ll")
   # Type ll contains exact lat long while type p is more approximate

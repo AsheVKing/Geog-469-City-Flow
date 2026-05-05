@@ -40,7 +40,7 @@ nynta_proj <- st_transform(nynta, crs = crs)
 ```
 
 # Data transformation
-```{r, warning=False}
+```{r, warning=FALSE}
 #Create a h3 cell index on nyc data
 h3_nyc_data <- nycDataSept %>% 
   mutate(h3_cell = latLngToCell(lat = lat, lng = lon, resolution = h3_res), home = get_parent(home, res = h3_res)) %>% 

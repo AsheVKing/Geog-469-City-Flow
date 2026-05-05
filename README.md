@@ -2,7 +2,7 @@ README
 ================
 
 # City Flow: tracking movement through NYC using twitter data
-Team Members: Ashe King, James McQuilken, Chimaera Todd, Ben Vales, Daniel Meyer
+Team Members: Ashe King, James McQuilkin, Chimaera Todd, Ben Vales, Daniel Meyer
 
 ## Repository Structure
 ```

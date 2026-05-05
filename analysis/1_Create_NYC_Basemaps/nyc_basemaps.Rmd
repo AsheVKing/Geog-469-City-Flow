@@ -31,11 +31,3 @@ ggplot(data = nynta) +
   ) +
   theme_minimal()
 ```
-
-#Creating a Theoretical Grid for Analysis
-```{r}
-#Creating a Theoretical Grid for Analysis
-
-#Set CRS
-
-```

@@ -104,7 +104,7 @@ inbound_heatmap <- mapdeck(
 ```{r}
 #Arc-Map (filtered to highlight highest concentrations of movements)
 
-#Filter Logic (only top 5% of areas with highest travel data get flagged)
+#Filter Logic (only top 10% of areas with highest travel data get flagged)
 edges_filtered <- edges %>% filter(count > quantile(count, 0.90, na.rm = TRUE)) 
 #plotting
 nyc_arc_filtered <- mapdeck(

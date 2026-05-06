@@ -21,6 +21,7 @@ library(readr)
 library(sf)
 library(scales)
 library(usethis)
+library(htmlwidgets)
 ```
 
 ```{r}
@@ -85,7 +86,7 @@ node_heat <- edges %>%
   left_join(nodes, by = c("to" = "cell_name"))      
 
 # Build heatmap
-inbound_heatmap <- mapdeck(
+nyc_heatmap <- mapdeck(
   token = Sys.getenv("MAPBOX_TOKEN"),                    #Loads Mapbox API token from .Renviron
   style = mapdeck_style('dark'),                         #dark basemap style
   pitch = 0                                              #flat (top-down) view
@@ -125,5 +126,13 @@ nyc_arc_filtered <- mapdeck(
     animation_speed = 0.2
     )
 nyc_arc_filtered
+```
+
+```{r}
+#save outputs
+saveWidget(nyc_arc, "nyc_arc.html", selfcontained = TRUE)
+saveWidget(nyc_heatmap, "nyc_heatmap.html", selfcontained = TRUE)
+saveWidget(nyc_arc_filtered, "nyc_arc_filtered.html", selfcontained = TRUE)
+
 ```
 

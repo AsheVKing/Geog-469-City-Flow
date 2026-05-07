@@ -96,27 +96,31 @@ basemap <- ggplot(nynta_proj) +
 
 vis_1  <- ggraph(graph, x = lon, y = lat, layout = 'manual') +
   geom_edge_link(aes(width = count), alpha = 0.5, color = "lightblue") +
-  geom_node_point(aes(size = degree, color = betweenness)) + 
+  geom_node_point(aes(size = degree)) + 
   scale_size(range = c(0.1, 2), name = "Node Degree") +
   scale_edge_width(range = c(0.1, 2), name = "Edge Count") +
-  scale_color_viridis_c(name = "Betweenness") +
   theme_void() +
   theme(
     plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
     legend.position = "right",
     legend.title = element_text(size = 10),
-    legend.text = element_text(size = 8)
+    legend.text = element_text(size = 8),
+    plot.background = element_rect(fill = "white")
   )
 
 plot(basemap + vis_1)
 ```
 
-![](base_graph_files/figure-gfm/combined-basmap-network-graph-1.png)<!-- -->
+![](base_graph_files/figure-gfm/combined-basemap-network-graph-1.png)<!-- -->
 
 \#Solo network graph visualization
 
 ``` r
-plot(vis_1 + labs(title = "Network Visualization Over Basemap"))
+plot(vis_1 + labs(title = "NYC Network Visualization"))
 ```
 
-![](base_graph_files/figure-gfm/solo-network-visualization-1.png)<!-- -->
+![](base_graph_files/figure-gfm/solo-network-visualization)-1.png)<!-- -->
+
+``` r
+#ggsave(filename = here("analysis/3_Create_Nodal_Graph/Network_map.png"), plot = vis_1 + labs(title = "Network Visualization Over Basemap"), dpi = 600)
+```

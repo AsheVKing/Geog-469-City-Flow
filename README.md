@@ -20,7 +20,6 @@ Team Members: Ashe King, James McQuilkin, Chimaera Todd, Ben Vales, Daniel Meyer
 │   ├── 2.4_Create_Neighborhood_Graph  # Neighborhood-level network analysis
 │   ├── 2.5_Gravity_Model              # Modeling movement using gravity model
 │   ├── 2.6_Animated_Heat_Flow_Map     # Visualization of flows
-│   └── Figures_GFM                    # ???
 │
 └── 3_Final_Outputs             # Final visualizations used in report/presentation
 ```

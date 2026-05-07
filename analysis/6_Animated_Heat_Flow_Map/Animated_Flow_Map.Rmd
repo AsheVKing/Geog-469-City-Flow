@@ -106,7 +106,7 @@ edges_filtered <- edges %>% filter(count > quantile(count, 0.90, na.rm = TRUE))
 #removing some noise
 edges_filtered <- edges %>%
   filter(from != to) %>% # only show maps of movements from to outside of "home" cell"
-  filter(count > quantile(count, 0.75, na.rm = TRUE)) %>% # top 25%
+  filter(count > quantile(count, 0.25, na.rm = TRUE)) %>% 
   slice_max(count, n = 750) #select rows from data frame that contain the largest values of count
 #calls map deck for base map
 nyc_arc <-mapdeck( 
@@ -121,8 +121,8 @@ nyc_arc <-mapdeck(
     destination = c("to_lon", "to_lat"), # [longitude, latitude] of arc end
     stroke_from = "#00FFCC", #sets orgin color as teal
     stroke_to = "#FF00FF", #sets destination color as pink
-    stroke_from_opacity = 100, #sets stroke opacity from 0 (thick) to 255 (very thin)
-    stroke_to_opacity = 100, #sets stroke opacity to 255 (very thin)
+    stroke_from_opacity = 255, #sets stroke opacity from 0 (thick) to 255 (very thin)
+    stroke_to_opacity = 255, #sets stroke opacity to 255 (very thin)
     trail_length = 0.5,#The proportion of the arc that is lit up at any one time (0 to 1)
     animation_speed = 0.2
   ) %>% 

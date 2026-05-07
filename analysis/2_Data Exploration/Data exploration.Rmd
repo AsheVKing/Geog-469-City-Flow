@@ -44,7 +44,7 @@ ggplot() +
   geom_sf(data = sf_nyc_data["u_id"])
 ```
 
-```{r}
+```{r h3-hex-basemap}
 # Setting up basemap
 nynta <- read_sf(here("data/raw_data/mapping_data/nynta2020_25d/nynta2020.shp"))
 nynta_proj <- st_transform(nynta, crs = crs)
@@ -76,7 +76,7 @@ key_list <- list(keys, keys)
 h3_interaction_matrix <- matrix(data = 0, nrow = length(keys), ncol = length(keys), dimnames = key_list)
 ```
 
-```{r}
+```{r post-heat-map}
 #messing around with the september twitter data to population the matrix
 
 #getting list of unique user IDs

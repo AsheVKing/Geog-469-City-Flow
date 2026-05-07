@@ -26,12 +26,22 @@ Team Members: Ashe King, James McQuilkin, Chimaera Todd, Ben Vales, Daniel Meyer
 ```
 
 ## Intro
-      NYC has the most diversity of transit systems of any city in the United States containing subway lines, citi bikes, 
-  taxis, ride shares, buses, cable cars, and ferries.The diversity of transportation allows for quick multimodal transit
-  across the city 
+  NYC has the most diversity of transit systems of any city in the United States containing subway lines, citi bikes, 
+  taxis, ride shares, buses, cable cars, and ferries.The diversity of transportation allows for quick multi-modal transit
+  across the city. At the same time, this makes tracing movement of people through NYC complex because of the inability to 
+  properly track the movement of people. With a accurate map of movement through the NYC metro area transit planning and
+  operation becomes easier. Knowing where people travel from and too can be an important part of filling transit gaps.
 
 ## Project Overview
-
+  The goal of this project is to utilize web scrapped geo-tagged twitter data as a proxy for movement to create a network graph
+  of movement through NYC. For the visualizations we are using twitter data from September of 2017. The twitter data was modified 
+  to include a calculated/approximate home location of each user. The location of each user's home was approximated using this
+  article as a basis https://doi.org/10.1080/13658816.2021.1887489. In addition we removed any data from users whose 'homes' were
+  located outside of the political boundary of NYC. In order to obfuscate the personal data we have aggregated the user's post data and
+  'home' data to a hexagonal cell using the H3 package at a resolution of 8 (Hex area ~3/4 km^2)
+  It can be assumed that a tweet posted outside of a user's 'home' is an area of the 
+  city that they in some way traveled to. In this way a map of a user's approximate travel through the study area over the study
+  period. Mapping the movement of every user over NYC 
 
 
 

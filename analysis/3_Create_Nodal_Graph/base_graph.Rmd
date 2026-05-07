@@ -124,7 +124,7 @@ graph <-  graph %>%
 ```
 
 # Ploting the graph
-```{r}
+```{r combined-basmap-network-graph}
 # Plot graph
 basemap <- ggplot(nynta_proj) +
   geom_sf()
@@ -140,7 +140,7 @@ vis_1  <- ggraph(graph, x = lon, y = lat, layout = 'manual') +
 plot(basemap + vis_1)
 ```
 #Solo network graph visualization
-```{r}
+```{r solo-network-visualization}
 plot(vis_1)
 ```
 

@@ -76,6 +76,8 @@ edges <- edges %>%
   filter(home != "882a1072c7fffff" & h3_cell != "882a1072c7fffff") %>% 
   rename(from = home, to = h3_cell)
 
+nodes %>% write_csv(file = here("data/derived_data/nodes_and_edge_data/nodes"))
+edges %>% write_csv(file = here("data/derived_data/nodes_and_edge_data/edges"))
 
 # Making Graph
 graph <- tbl_graph(nodes = nodes, edges = edges, directed = T)
@@ -103,11 +105,11 @@ vis_1  <- ggraph(graph, x = lon, y = lat, layout = 'manual') +
 plot(basemap + vis_1)
 ```
 
-![](base_graph_files/figure-gfm/unnamed-chunk-3-1.png)<!-- --> \#Solo
-network graph visualization
+![](base_graph_files/figure-gfm/combined-basmap-network-graph-1.png)<!-- -->
+\#Solo network graph visualization
 
 ``` r
 plot(vis_1)
 ```
 
-![](base_graph_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](base_graph_files/figure-gfm/solo-network-visualization-1.png)<!-- -->

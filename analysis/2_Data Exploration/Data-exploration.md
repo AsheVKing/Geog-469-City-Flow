@@ -52,7 +52,7 @@ tm_shape(nynta_proj["BoroName"])+
 
     ## [v3->v4] `tm_polygons()`: use `fill_alpha` instead of `alpha`.
 
-![](Data-exploration_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](Data-exploration_files/figure-gfm/h3-hex-basemap-1.png)<!-- -->
 
 ``` r
 #Creating the interaction matrix for the h3 Cells
@@ -127,7 +127,7 @@ tm_shape(nynta["BoroName"])+
               fill_alpha = .5)
 ```
 
-![](Data-exploration_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](Data-exploration_files/figure-gfm/post-heat-map-1.png)<!-- -->
 
 ``` r
 #finding the number of unique cells that each user posted in throughout the day
@@ -277,4 +277,4 @@ graph
   theme_void()
 ```
 
-![](Data-exploration_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](Data-exploration_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->

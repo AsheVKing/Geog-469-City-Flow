@@ -28,7 +28,9 @@ crs=2263
 
 ```{r}
 # read in data and store in data table
-nycDataSept <- fread(here(here("data/derived_data/user_data/twitter_data_user_origin_2017-09.csv")))
+nycDataSept <- fread(here(here("data/derived_data/user_data/twitter_data_user_origin_2017-09.cs-v")))
+nycDataSept <- nycDataSept %>% 
+  filter(is_local == T)
 nycDataSept <- nycDataSept %>% filter(is_local == T)
 ```
 
@@ -136,83 +138,7 @@ cells_visited %>%
 h3_nyc_data_slim
 ```
 
-```{r}
-# Filtering visited nodes
-h3_nyc_data_slim <- h3_nyc_data_slim %>% 
-  mutate(geometry = cell_to_point(h3_cell)) %>% 
-  st_as_sf() %>%
-  st_transform(crs=crs) %>% 
-  st_intersection(nynta_proj["BoroName"])
 
-# Making node table
-nodes <- h3_nyc_data_slim %>% 
-  select(cell_name = h3_cell) %>% 
-  mutate(lat = cellToLatLng(cell_name)$lat, lon = cellToLatLng(cell_name)$lng) %>% 
-  distinct(cell_name, .keep_all = T)
-
-# simple feature nodes
-# sf_nodes <- nodes %>%
-#   mutate(geometry = st_centroid(cell_to_polygon(cell_name)))
-
-# Making edge table
-edges <- h3_nyc_data_slim %>% 
-  group_by(u_id) %>% 
-  expand(from = h3_cell, to = h3_cell) %>% #create a to/from col using combination of cells grouped by user id
-  ungroup() %>% 
-  select(from, to) %>% # the resulting DF had over 1mil rows with plently of duplicates
-  group_by(from, to) %>% 
-  mutate(count = n()) %>% # creating count by grouping by distinct from/to pairs
-  ungroup() %>% 
-  distinct(.keep_all = T) %>% # getting rid of duplicate rows
-  filter(from != to) %>%  # removing rows where from node == to node
-  mutate(key1 = pmin(to, from), # creating temp key cols to remove flipped duplicate rows
-         key2 = pmax(to, from)) %>%
-  distinct(key1, key2, .keep_all = TRUE) %>%   # keeping only unique key combinations
-  select(-key1, -key2)   # removing the temporary key columns
-
-#filter edges to only contain edges with a count greater than n
-edges <- edges %>% 
-  filter(count >= 10)
-
-# simple feature edges
-# sf_edges <- edges %>%
-#   rowwise() %>%
-#   mutate(
-#     geometry = st_sfc(
-#       st_linestring(
-#         rbind(
-#           st_coordinates(cell_to_point(from)),
-#           st_coordinates(cell_to_point(to))
-#         )
-#       )
-#     )
-#   ) %>%
-#   st_as_sf()
-
-
-# Making Graph
-graph <- tbl_graph(nodes = nodes, edges = edges, directed = F)
-graph <-  graph %>%
-  activate(nodes) %>%
-  mutate(degree = centrality_degree(),
-         betweenness = centrality_betweenness())
-
-graph
-
-```
-
-```{r}
-# Plot graph
-  ggraph(graph, x = lon, y = lat, layout = 'manual') +
-  geom_edge_link(aes(width = count), alpha = 0.5, color = 'lightblue')+
-  geom_node_point(aes(size = degree, color = betweenness)) + 
-  scale_size(range = c(0.1, 2))+
- # geom_node_text(aes(label = cell_name), size = 3, repel =T) +
-  scale_edge_width(range = c(0.1, 2))+
-  scale_color_viridis_c() +
-  theme_void()
-  
-```
 
 
 

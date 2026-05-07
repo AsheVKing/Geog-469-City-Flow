@@ -125,24 +125,7 @@ graph <-  graph %>%
          betweenness = centrality_betweenness())
 ```
 
-# Ploting the graph
-# ```{r combined-basmap-network-graph}
-# # Plot graph
-# basemap <- ggplot(nynta_proj) +
-#   geom_sf()
-# vis_1  <- ggraph(graph, x = lon, y = lat, layout = 'manual') +
-#   geom_edge_link(aes(width = count), alpha = 0.5, color = "lightblue")+
-#   geom_node_point(aes(size = degree, color = betweenness)) + 
-#   scale_size(range = c(0.1, 2))+
-#  # geom_node_text(aes(label = cell_name), size = 3, repel =T) +
-#   scale_edge_width(range = c(0.1, 2))+
-#   scale_color_viridis_c() +
-#   theme_void()
-# 
-# plot(basemap + vis_1)
-```
-
-```{r}
+```{r combined-basmap-network-graph}
 # Cleaned visualization - James
 basemap <- ggplot(nynta_proj) +
   geom_sf()
@@ -153,7 +136,6 @@ vis_1  <- ggraph(graph, x = lon, y = lat, layout = 'manual') +
   scale_size(range = c(0.1, 2), name = "Node Degree") +
   scale_edge_width(range = c(0.1, 2), name = "Edge Count") +
   scale_color_viridis_c(name = "Betweenness") +
-  labs(title = "Network Visualization Over Basemap") +
   theme_void() +
   theme(
     plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
@@ -168,5 +150,5 @@ plot(basemap + vis_1)
 
 #Solo network graph visualization
 ```{r solo-network-visualization}
-plot(vis_1)
+plot(vis_1 + labs(title = "Network Visualization Over Basemap"))
 ```

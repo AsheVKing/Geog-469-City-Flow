@@ -32,6 +32,7 @@ h3_nyc_data_slim <- h3_nyc_data %>%
   ungroup() %>% 
   filter(h3_cell != home) # Fitler where posts are made in the User's home region
 
+#Creating a list of a cells(nodes) in the data to use as a basis for the node data frame
 all_cells <- h3_nyc_data_slim %>% 
   pivot_longer(cols = c(home, h3_cell)) %>% 
   select(cell_name = value) %>% 
@@ -76,8 +77,9 @@ edges <- edges %>%
   filter(home != "882a1072c7fffff" & h3_cell != "882a1072c7fffff") %>% 
   rename(from = home, to = h3_cell)
 
-nodes %>% write_csv(file = here("data/derived_data/nodes_and_edge_data/nodes"))
-edges %>% write_csv(file = here("data/derived_data/nodes_and_edge_data/edges"))
+#Outputs for edge and node csv files, uncomment to write to disk
+# nodes %>% write_csv(file = here("data/derived_data/nodes_and_edge_data/nodes"))
+# edges %>% write_csv(file = here("data/derived_data/nodes_and_edge_data/edges"))
 
 # Making Graph
 graph <- tbl_graph(nodes = nodes, edges = edges, directed = T)
@@ -87,29 +89,34 @@ graph <-  graph %>%
          betweenness = centrality_betweenness())
 ```
 
-# Ploting the graph
-
 ``` r
-# Plot graph
+# Cleaned visualization - James
 basemap <- ggplot(nynta_proj) +
   geom_sf()
+
 vis_1  <- ggraph(graph, x = lon, y = lat, layout = 'manual') +
-  geom_edge_link(aes(width = count), alpha = 0.5, color = "lightblue")+
+  geom_edge_link(aes(width = count), alpha = 0.5, color = "lightblue") +
   geom_node_point(aes(size = degree, color = betweenness)) + 
-  scale_size(range = c(0.1, 2))+
- # geom_node_text(aes(label = cell_name), size = 3, repel =T) +
-  scale_edge_width(range = c(0.1, 2))+
-  scale_color_viridis_c() +
-  theme_void()
+  scale_size(range = c(0.1, 2), name = "Node Degree") +
+  scale_edge_width(range = c(0.1, 2), name = "Edge Count") +
+  scale_color_viridis_c(name = "Betweenness") +
+  theme_void() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    legend.position = "right",
+    legend.title = element_text(size = 10),
+    legend.text = element_text(size = 8)
+  )
 
 plot(basemap + vis_1)
 ```
 
 ![](base_graph_files/figure-gfm/combined-basmap-network-graph-1.png)<!-- -->
+
 \#Solo network graph visualization
 
 ``` r
-plot(vis_1)
+plot(vis_1 + labs(title = "Network Visualization Over Basemap"))
 ```
 
 ![](base_graph_files/figure-gfm/solo-network-visualization-1.png)<!-- -->

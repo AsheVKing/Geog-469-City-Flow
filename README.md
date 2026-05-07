@@ -41,7 +41,7 @@ Team Members: Ashe King, James McQuilkin, Chimaera Todd, Ben Vales, Daniel Meyer
   outside of a user's 'home' is an area of the city that they in some way traveled to. In this way a map of a user's approximate travel 
   through the study area over the study period. Mapping the movement of every user over NYC creates a network map of travel through the city.
   
-  ![Map of the Twitter data network visualization](analysis\3_Create_Nodal_Graph\Network_map.png)
+  ![Map of the Twitter data network visualization](https://github.com/AsheVKing/Geog-469-City-Flow/blob/main/analysis/3_Create_Nodal_Graph/Network_map.png)
   
   This is the output from the dataset that we used, but the code should be able to work if the csv/dataframe is formatted the same
   

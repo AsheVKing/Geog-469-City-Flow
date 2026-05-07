@@ -27,11 +27,16 @@ library(htmlwidgets)
 ```{r}
 
 
-#load files needed to create map (from base map)
-# nodes: one row per H3 hexagonal cell, with cell name + centroid lat/lon
-# edges: directed flow counts between pairs of H3 cells (from → to)
-nodes <- read_csv("../../data/derived_data/nodes_and_edge_data/nyc_nodes.csv")
-edges <- read_csv("../../data/derived_data/nodes_and_edge_data/nyc_edges.csv")
+#load nodes and edges from basemap
+nodes <- read_csv(here("data/derived_data/nodes_and_edge_data/nyc_nodes.csv"))
+edges <- read_csv(here("data/derived_data/nodes_and_edge_data/nyc_edges.csv"))
+
+#load nyc boundaries shapefiles
+nyc_brgh <-st_read(here("data/raw_data/mapping_data/nybb_25d/nybb.shp"))
+nyc_h3 <-st_read(here("data/raw_data/mapping_data/nynta2020_25d/nynta2020.shp"))
+#transform for mapping later
+nyc_brgh <- st_transform(nyc_brgh, crs = 4326)
+nyc_h3 <- st_transform(nyc_brgh, crs = 4326)
 
 ```
 
@@ -40,8 +45,7 @@ edges <- read_csv("../../data/derived_data/nodes_and_edge_data/nyc_edges.csv")
 ```{r}
 #Joins node coordinates onto the edge table so each edge row carries both its origin and destination lat/lon — the format mapdeck expects for arcs.
 edges <- edges %>%
-  select(from, to, count) %>%   #Drop unused columns; retain only the origin 
-                                #cell, destination cell,and the flow count between them.
+  select(from, to, count) %>%   #Drops unused columns; retain only the origin/destination cell,and the flow count between
   left_join(nodes,by = c("from" = "cell_name")) %>% 
   #Left-join nodes on the origin cell ("from") to attach origin coords.
   rename(from_lat = lat, from_lon = lon) %>% #rename coulums to from_lat/from_long
@@ -52,42 +56,20 @@ edges <- edges %>%
 
 
 ```{r}
-#mapdeck (no filtering)
-#calls map deck for base map
-nyc_arc <-mapdeck( 
-  token = Sys.getenv("MAPBOX_TOKEN"), #loads API mapbox token
-  style = mapdeck_style('dark'), #chooses dark style
-  pitch = 45 #pitch of map
-) %>% 
-  #creates the arcs
-  add_animated_arc(
-    data = edges, #loads data
-    origin = c("from_lon", "from_lat"), # [longitude, latitude] of arc start
-    destination = c("to_lon", "to_lat"), # [longitude, latitude] of arc end
-     stroke_from = "#00FFCC", #sets orgin color as teal
-    stroke_to = "#FF00FF", #sets destination color as pink
-    stroke_from_opacity = 255, #sets stroke opacity from 0 (thick) to 255 (very thin)
-    stroke_to_opacity = 255, #sets stroke opacity to 255 (very thin)
-  )
+#Heat map
 
-
-```
-
-```{r}
-#heat map
-
-# Aggregate total inbound flow per destination cell
+# Aggregates total inbound flow per destination cell for mapping
 node_heat <- edges %>%
   group_by(to) %>%                              #group by destination cell 
-  summarise(total_count = sum(count, na.rm = TRUE)) %>% # sum all incoming flow counts per cell;
-# na.rm = TRUE ignores missing values
+  summarise(total_count = sum(count, na.rm = TRUE)) %>% # summerize all incoming flow counts per cell;
+#na.rm = TRUE ignores missing values
   
 # attach lat/lon from nodes table so each destination cell has coordinates for mapping
   left_join(nodes, by = c("to" = "cell_name"))      
 
 # Build heatmap
 nyc_heatmap <- mapdeck(
-  token = Sys.getenv("MAPBOX_TOKEN"),                    #Loads Mapbox API token from .Renviron
+  token = Sys.getenv("MAPBOX_TOKEN"),                    #Loads Mapbox API token
   style = mapdeck_style('dark'),                         #dark basemap style
   pitch = 0                                              #flat (top-down) view
 ) %>%
@@ -96,43 +78,68 @@ nyc_heatmap <- mapdeck(
     lat = "lat",                 #latitude column from nodes
     lon = "lon",                #longitude column from nodes
     weight = "total_count",        # ntensity driven by total data
-    radius_pixels = 60,                  #how far each point "bleeds" — larger = smoother
+    radius_pixels = 30,                  #how far each point "bleeds" — larger = smoother
     intensity = 1,                  #global multiplier on all weight values
     threshold = 0.05                #hides points below 5% of max weight (removes noise)
+  ) %>% 
+  add_polygon(
+    data = nyc_brgh,
+    fill_opacity = 0,          # outline only
+    stroke_colour = "#FFFFFF", # white border
+    stroke_width = 100,         # adjust thickness as needed
+    tooltip = "BoroName"       # hover to see borough name
   )
+nyc_heatmap
 ```
 
 ```{r}
-#Arc-Map (filtered to highlight highest concentrations of movements)
+#Arc-Map 
 
 #Filter Logic (only top 10% of areas with highest travel data get flagged)
-edges_filtered <- edges %>% filter(count > quantile(count, 0.90, na.rm = TRUE)) 
-#plotting
-nyc_arc_filtered <- mapdeck(
-  token = Sys.getenv("MAPBOX_TOKEN"), #loads mapbox token
-  style = 'mapbox://styles/mapbox/dark-v9', #chooses style
-  pitch = 45, #sets the angle for map viewing
-) %>%
+edges_filtered <- edges %>% filter(count > quantile(count, 0.90, na.rm = TRUE))
+```
+
+
+```{r}
+#arc map large scale
+
+#removing some noise
+edges_filtered <- edges %>%
+  filter(from != to) %>% # only show maps of movements from to outside of "home" cell"
+  filter(count > quantile(count, 0.75, na.rm = TRUE)) %>% # top 10%
+  slice_max(count, n = 500)              
+#calls map deck for base map
+nyc_arc <-mapdeck( 
+  token = Sys.getenv("MAPBOX_TOKEN"), #loads API mapbox token
+  style = mapdeck_style('dark'), #chooses dark style
+  pitch = 45 #pitch of map
+) %>% 
+  #creates the arcs
   add_animated_arc(
-    data = edges_filtered,  #loads filtered data
-    origin = c("from_lon", "from_lat"), #starting coordinates (their "home")
-    destination = c("to_lon", "to_lat"), #end-point coordinates (where they are traveling too)
-    stroke_width = 1.5, #sets stroke width
-    stroke_from = "#00FFCC", #sets origin point color to teal
-    stroke_to = "#FF00FF",   #sets destination color to pink
-    stroke_from_opacity = 120, #Controls transparency of stroke_from
-    stroke_to_opacity = 120, #Controls transparency of stroke_to
+    data = edges_filtered, #loads data
+    origin = c("from_lon", "from_lat"), # [longitude, latitude] of arc start
+    destination = c("to_lon", "to_lat"), # [longitude, latitude] of arc end
+    stroke_from = "#00FFCC", #sets orgin color as teal
+    stroke_to = "#FF00FF", #sets destination color as pink
+    stroke_from_opacity = 100, #sets stroke opacity from 0 (thick) to 255 (very thin)
+    stroke_to_opacity = 100, #sets stroke opacity to 255 (very thin)
     trail_length = 0.5,#The proportion of the arc that is lit up at any one time (0 to 1)
     animation_speed = 0.2
-    )
-nyc_arc_filtered
+  ) %>% 
+#add shapefiles to map
+ add_polygon(
+    data = nyc_brgh,
+    fill_opacity = 0,          # outline only
+    stroke_colour = "#FFFFFF", # white border
+    stroke_width = 100,         # adjust thickness
+    tooltip = "BoroName"       # interactive borough names
+  )
+nyc_arc
 ```
 
 ```{r}
 #save outputs
 saveWidget(nyc_arc, "nyc_arc.html", selfcontained = TRUE)
 saveWidget(nyc_heatmap, "nyc_heatmap.html", selfcontained = TRUE)
-saveWidget(nyc_arc_filtered, "nyc_arc_filtered.html", selfcontained = TRUE)
-
 ```
 

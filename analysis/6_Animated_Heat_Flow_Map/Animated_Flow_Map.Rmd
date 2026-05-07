@@ -27,7 +27,7 @@ library(htmlwidgets)
 ```{r}
 
 
-#load nodes and edges from basemap
+#load nodes and edges from base graph
 nodes <- read_csv(here("data/derived_data/nodes_and_edge_data/nyc_nodes.csv"))
 edges <- read_csv(here("data/derived_data/nodes_and_edge_data/nyc_edges.csv"))
 
@@ -106,8 +106,8 @@ edges_filtered <- edges %>% filter(count > quantile(count, 0.90, na.rm = TRUE))
 #removing some noise
 edges_filtered <- edges %>%
   filter(from != to) %>% # only show maps of movements from to outside of "home" cell"
-  filter(count > quantile(count, 0.75, na.rm = TRUE)) %>% # top 10%
-  slice_max(count, n = 500)              
+  filter(count > quantile(count, 0.75, na.rm = TRUE)) %>% # top 25%
+  slice_max(count, n = 750) #select rows from data frame that contain the largest values of count
 #calls map deck for base map
 nyc_arc <-mapdeck( 
   token = Sys.getenv("MAPBOX_TOKEN"), #loads API mapbox token

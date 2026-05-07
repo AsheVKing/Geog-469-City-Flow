@@ -110,7 +110,9 @@ nynta_proj = nynta_proj |>
 ``` r
 # Mapping number of (normalized) posts by neighborhood
 tm_shape(nynta_proj)+
-  tm_polygons(fill = "sum_to", style = "quantile")
+  tm_polygons(fill = "sum_to", style = "quantile",
+              title = "Weighted Sum of Posts") +
+  tm_layout(legend.position = c(.025, .975))
 ```
 
     ## 
@@ -120,20 +122,25 @@ tm_shape(nynta_proj)+
     ## [v3->v4] `tm_polygons()`: instead of `style = "quantile"`, use fill.scale =
     ## `tm_scale_intervals()`.
     ## ℹ Migrate the argument(s) 'style' to 'tm_scale_intervals(<HERE>)'
+    ## [v3->v4] `tm_polygons()`: migrate the argument(s) related to the legend of the
+    ## visual variable `fill` namely 'title' to 'fill.legend = tm_legend(<HERE>)'
 
 ![](neighborhood_graph_files/figure-gfm/Choropleth_Visualizations-1.png)<!-- -->
 
 ``` r
 # Mapping number of users by neighborhood
 tm_shape(nynta_proj)+
-  tm_polygons(fill = "sum_from", style = "quantile")
+  tm_polygons(fill = "sum_from", style = "quantile",
+              title = "Number of Users") +
+  tm_layout(legend.position = c(.025, .975))
 ```
 
     ## 
     ## ── tmap v3 code detected ───────────────────────────────────────────────────────
     ## [v3->v4] `tm_polygons()`: instead of `style = "quantile"`, use fill.scale =
     ## `tm_scale_intervals()`.
-    ## ℹ Migrate the argument(s) 'style' to 'tm_scale_intervals(<HERE>)'
+    ## ℹ Migrate the argument(s) 'style' to 'tm_scale_intervals(<HERE>)'[v3->v4] `tm_polygons()`: migrate the argument(s) related to the legend of the
+    ## visual variable `fill` namely 'title' to 'fill.legend = tm_legend(<HERE>)'
 
 ![](neighborhood_graph_files/figure-gfm/Choropleth_Visualizations-2.png)<!-- -->
 
@@ -142,14 +149,17 @@ tm_shape(nynta_proj)+
 #   This visualizes which neighborhoods have more inflow (ie that containing JFK Airport),
 #   and which have users that tend to tweet in other neighborhoods (ie Upper Manhattan)
 tm_shape(nynta_proj)+
-  tm_polygons(fill = "sum_diff", style = "quantile")
+  tm_polygons(fill = "sum_diff", style = "quantile",
+              title = "Number of Users minus\nWeighted Sum of Posts") +
+  tm_layout(legend.position = c(.025, .975))
 ```
 
     ## 
     ## ── tmap v3 code detected ───────────────────────────────────────────────────────
     ## [v3->v4] `tm_polygons()`: instead of `style = "quantile"`, use fill.scale =
     ## `tm_scale_intervals()`.
-    ## ℹ Migrate the argument(s) 'style' to 'tm_scale_intervals(<HERE>)'[scale] tm_polygons:() the data variable assigned to 'fill' contains positive and negative values, so midpoint is set to 0. Set 'midpoint = NA' in 'fill.scale = tm_scale_intervals(<HERE>)' to use all visual values (e.g. colors)
+    ## ℹ Migrate the argument(s) 'style' to 'tm_scale_intervals(<HERE>)'[v3->v4] `tm_polygons()`: migrate the argument(s) related to the legend of the
+    ## visual variable `fill` namely 'title' to 'fill.legend = tm_legend(<HERE>)'[scale] tm_polygons:() the data variable assigned to 'fill' contains positive and negative values, so midpoint is set to 0. Set 'midpoint = NA' in 'fill.scale = tm_scale_intervals(<HERE>)' to use all visual values (e.g. colors)
 
 ![](neighborhood_graph_files/figure-gfm/Choropleth_Visualizations-3.png)<!-- -->
 

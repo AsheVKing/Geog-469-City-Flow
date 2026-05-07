@@ -147,17 +147,23 @@ nynta_proj = nynta_proj |>
 
 # Mapping number of (normalized) posts by neighborhood
 tm_shape(nynta_proj)+
-  tm_polygons(fill = "sum_to", style = "quantile")
+  tm_polygons(fill = "sum_to", style = "quantile",
+              title = "Weighted Sum of Posts") +
+  tm_layout(legend.position = c(.025, .975))
 
 # Mapping number of users by neighborhood
 tm_shape(nynta_proj)+
-  tm_polygons(fill = "sum_from", style = "quantile")
+  tm_polygons(fill = "sum_from", style = "quantile",
+              title = "Number of Users") +
+  tm_layout(legend.position = c(.025, .975))
 
 # Mapping differential between posts and users by neighborhood
 #   This visualizes which neighborhoods have more inflow (ie that containing JFK Airport),
 #   and which have users that tend to tweet in other neighborhoods (ie Upper Manhattan)
 tm_shape(nynta_proj)+
-  tm_polygons(fill = "sum_diff", style = "quantile")
+  tm_polygons(fill = "sum_diff", style = "quantile",
+              title = "Number of Users minus\nWeighted Sum of Posts") +
+  tm_layout(legend.position = c(.025, .975))
 
 ```
 

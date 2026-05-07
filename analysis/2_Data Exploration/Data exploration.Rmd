@@ -28,7 +28,7 @@ crs=2263
 
 ```{r}
 # read in data and store in data table
-nycDataSept <- fread(here(here("data/derived_data/user_data/twitter_data_user_origin_2017-09.cs-v")))
+nycDataSept <- fread(here("data/derived_data/user_data/twitter_data_user_origin_2017-09.csv"))
 nycDataSept <- nycDataSept %>% 
   filter(is_local == T)
 nycDataSept <- nycDataSept %>% filter(is_local == T)

@@ -5,6 +5,7 @@ output: github_document
 ---
 
 ```{r, warning=FALSE, include=FALSE}
+
 # initialize libraries
 library(sf)
 library(tidyverse)
@@ -132,16 +133,16 @@ basemap <- ggplot(nynta_proj) +
 
 vis_1  <- ggraph(graph, x = lon, y = lat, layout = 'manual') +
   geom_edge_link(aes(width = count), alpha = 0.5, color = "lightblue") +
-  geom_node_point(aes(size = degree, color = betweenness)) + 
+  geom_node_point(aes(size = degree)) + 
   scale_size(range = c(0.1, 2), name = "Node Degree") +
   scale_edge_width(range = c(0.1, 2), name = "Edge Count") +
-  scale_color_viridis_c(name = "Betweenness") +
   theme_void() +
   theme(
     plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
     legend.position = "right",
     legend.title = element_text(size = 10),
-    legend.text = element_text(size = 8)
+    legend.text = element_text(size = 8),
+    plot.background = element_rect(fill = "white")
   )
 
 plot(basemap + vis_1)
@@ -149,6 +150,7 @@ plot(basemap + vis_1)
 ```
 
 #Solo network graph visualization
-```{r solo-network-visualization}
-plot(vis_1 + labs(title = "Network Visualization Over Basemap"))
+```{r solo-network-visualization)}
+plot(vis_1 + labs(title = "NYC Network Visualization"))
+ggsave(filename = here("analysis/3_Create_Nodal_Graph/Network_map.png"), plot = vis_1 + labs(title = "Network Visualization Over Basemap"), dpi = 600)
 ```

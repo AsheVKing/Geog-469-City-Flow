@@ -9,10 +9,10 @@ Team Members: Ashe King, James McQuilkin, Chimaera Todd, Ben Vales, Daniel Meyer
 ├── 1_Data
 │   ├── Raw_Data
 │   │   ├── Mapping_Data        # Geographic boundary files, shapefiles
-│   │   └── Twitter_Data        # Raw Twitter datasets
+│   │   └── Twitter_Data        # Raw Twitter datasets (Not included in repository)
 │   └── Derived_Data
-│       └── User_Data           # Cleaned, processed, and user-level datasets
-│
+│       ├── User_Data           # Cleaned, processed, and user-level datasets 
+│       └── Nodes_and_edge_data # Csv files for node and edge data for the Network graph (Not included in repository)
 ├── 2_Analysis
 │   ├── 2.1_Create_NYC_Basemaps        # Generates base maps of NYC
 │   ├── 2.2_Data_Exploration           # Initial exploration and descriptive analysis
@@ -37,10 +37,21 @@ Team Members: Ashe King, James McQuilkin, Chimaera Todd, Ben Vales, Daniel Meyer
   to include a calculated/approximate home location of each user. The location of each user's home was approximated using this
   article as a basis https://doi.org/10.1080/13658816.2021.1887489. In addition we removed any data from users whose 'homes' were
   located outside of the political boundary of NYC. In order to obfuscate the personal data we have aggregated the user's post data and
-  'home' data to a hexagonal cell using the H3 package at a resolution of 8 (Hex area ~3/4 km^2)
-  It can be assumed that a tweet posted outside of a user's 'home' is an area of the 
-  city that they in some way traveled to. In this way a map of a user's approximate travel through the study area over the study
-  period. Mapping the movement of every user over NYC 
+  'home' data to a hexagonal cell using the H3 package at a resolution of 8 (Hex area ~3/4 km^2) It can be assumed that a tweet posted 
+  outside of a user's 'home' is an area of the city that they in some way traveled to. In this way a map of a user's approximate travel 
+  through the study area over the study period. Mapping the movement of every user over NYC creates a network map of travel through the city.
+  
+  ![Map of the Twitter data network visualization](analysis\3_Create_Nodal_Graph\Network_map.png)
+  
+  This is the output from the dataset that we used, but the code should be able to work if the csv/dataframe is formatted the same
+  
+## Data formatting
 
+  Data utilized by this program should be formatted with the following structure
+  
+  id|u_id|created_at|home|lon|lat|type|text
+  --|--|--|--|--|--|--|--
+  twitter post id|user account id|date-time of post creation|approximte home location|longitude|latitude|type of media in post|conent of post
+  
 
 

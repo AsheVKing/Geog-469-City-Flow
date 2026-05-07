@@ -68,6 +68,7 @@ h3_nyc_data_slim <- h3_nyc_data %>%
   ungroup() %>% 
   filter(h3_cell != home) # Fitler where posts are made in the User's home region
 
+#Creating a list of a cells(nodes) in the data to use as a basis for the node data frame
 all_cells <- h3_nyc_data_slim %>% 
   pivot_longer(cols = c(home, h3_cell)) %>% 
   select(cell_name = value) %>% 
@@ -112,8 +113,9 @@ edges <- edges %>%
   filter(home != "882a1072c7fffff" & h3_cell != "882a1072c7fffff") %>% 
   rename(from = home, to = h3_cell)
 
-nodes %>% write_csv(file = here("data/derived_data/nodes_and_edge_data/nodes"))
-edges %>% write_csv(file = here("data/derived_data/nodes_and_edge_data/edges"))
+#Outputs for edge and node csv files, uncomment to write to disk
+# nodes %>% write_csv(file = here("data/derived_data/nodes_and_edge_data/nodes"))
+# edges %>% write_csv(file = here("data/derived_data/nodes_and_edge_data/edges"))
 
 # Making Graph
 graph <- tbl_graph(nodes = nodes, edges = edges, directed = T)
@@ -124,7 +126,7 @@ graph <-  graph %>%
 ```
 
 # Ploting the graph
-```{r}
+```{r combined-basmap-network-graph}
 # Plot graph
 basemap <- ggplot(nynta_proj) +
   geom_sf()
@@ -140,7 +142,7 @@ vis_1  <- ggraph(graph, x = lon, y = lat, layout = 'manual') +
 plot(basemap + vis_1)
 ```
 #Solo network graph visualization
-```{r}
+```{r solo-network-visualization}
 plot(vis_1)
 ```
 

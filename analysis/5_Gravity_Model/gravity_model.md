@@ -17,10 +17,19 @@ nynta_proj <- st_transform(nynta, crs = 4326)
 
 ``` r
 # Load twitter data and filter by type to get exact coordinates
-twitter_path <- here("data/raw_data/twitter_data/twitter_na_2017-09_ny.csv.gz")
-df <- fread(twitter_path) %>%
+#twitter_path <- here("data/raw_data/twitter_data/twitter_na_2017-09_ny.csv.gz")
+twitter_path <- "C:/Users/ldmey/Downloads/469_proj_data/twitter_na_2017-09_ny.csv.gz"
+sdf <- fread(twitter_path) %>%
   filter(type == "ll")
+twitter_path <- "C:/Users/ldmey/Downloads/469_proj_data/twitter_na_2017-10_ny.csv.gz"
+odf <- fread(twitter_path) %>%
+  filter(type == "ll")
+twitter_path <- "C:/Users/ldmey/Downloads/469_proj_data/twitter_na_2017-11_ny.csv.gz"
+ndf <- fread(twitter_path) %>%
+  filter(type == "ll") 
   # Type ll contains exact lat long while type p is more approximate
+
+df <- rbindlist(list(sdf, odf, ndf), fill = TRUE)
 ```
 
 ``` r
@@ -47,7 +56,7 @@ nycDataSept <- df_final %>% filter(is_local == T)
 
 ``` r
 # Operating on n rows
-sub_nyc_data <- slice_head(nycDataSept, n = 100000)
+sub_nyc_data <- slice_head(nycDataSept, n = 600000)
 
 # Extracting necessary data and converting it into a simple feature
 sf_nyc_data <- sub_nyc_data %>% 
@@ -66,7 +75,8 @@ posts_table = sf_nyc_data$u_id |>
 #    This normalization prevents users with many posts from drowning out the
 #     data from users who post less frequently.
 sf_nyc_data = sf_nyc_data |>
-  mutate(weight = 1/posts_table[as.character(u_id)])
+  mutate(weight = 1/posts_table[as.character(u_id)]) |>
+  filter(weight < 1)
 ```
 
 ``` r
@@ -78,8 +88,18 @@ sf_nyc_data = sf_nyc_data |>
   st_join(nynta_proj, join=st_within, suffix = c("_post", "_user")) |>
   select(c(id, u_id, home, weight,
            geometry, geometry_user,
-           BoroName_post, NTAName_post, BoroName_user, NTAName_user)) |>
+           BoroName_post, NTAName_post, NTAType_post,
+           BoroName_user, NTAName_user, NTAType_user)) |>
   st_set_geometry("geometry")
+
+# Remove neighborhoods where the user's neighborhood is
+#  documented as a cemetery or airport or park (clear data error)
+sf_nyc_data = sf_nyc_data |>
+  filter(
+    NTAType_user != 7,
+    NTAType_user != 8,
+    NTAType_user != 9,
+  )
 
 # Calculate weighted post totals by neighborhood...
 post_neighborhoods_norm = sf_nyc_data |>
@@ -117,10 +137,8 @@ joint_neighborhoods_norm = sf_nyc_data |>
     
     !is.na(to),                         # Exclude edges to or from locations outside
                                         #    the neighborhoods
-    weight > 1,                         # Minimum weighted count of posts for a
+    weight > 0,                         # Minimum weighted count of posts for a
                                         #    a neighborhood to be considered
-    to != from,                         # Exclude posts in the same neighborhood as
-                                        #    the user's home
     from != "Tribeca-Civic Center",     # Exclude posts by users to and from a
     to != "Tribeca-Civic Center"        #    suspiciously over-represented neighborhood
     
@@ -190,9 +208,9 @@ for (n in 1:nrow(joint_neighborhoods_norm)) {
   ])
 }
 
-# Remove rows with no users in the destination node
+# Remove rows with no users in the destination node or where the user and post are in the same neighborhood
 joint_neighborhoods_norm = joint_neighborhoods_norm |>
-  filter(!is.na(users_to))
+  filter(!is.na(users_to), to != from)
 ```
 
 ``` r
@@ -207,60 +225,41 @@ joint_neighborhoods_norm$weight = ols$residuals
 ```
 
 ``` r
-# Making the graph
-graph <- tbl_graph(nodes = nynta_points, edges = joint_neighborhoods_norm, directed = T)
-graph <-  graph %>%
-  activate(nodes) %>%
-  mutate(degree = centrality_degree(),
-         betweenness = centrality_betweenness())
+# Visualizing a graph of the n edges with the greatest deviation from the model
+#  in either direction
+n = 15
+extreme_neighborhoods_norm = arrange(joint_neighborhoods_norm, weight)[1:n,] |>
+  rbind( arrange(joint_neighborhoods_norm, -weight)[1:n,] )
+
+graph <- tbl_graph(nodes = nynta_points, edges = extreme_neighborhoods_norm, directed = T)
 
 # Plotting the graph
   ggraph(graph, x = x, y = y, layout = 'manual') +
+  
+  # Create a basemap from neighborhood polygons
   geom_sf(data = nynta_proj, inherit.aes = F, fill = "#feeded67", color = "#22222222") +
-  geom_edge_link(aes(alpha = abs(weight/2)^2, width = abs(weight/2)^1.5, color = weight))+
-  scale_edge_color_viridis(guide = guide_edge_colorbar()) +
-  scale_edge_width(range = c(0, 2))+
-  scale_edge_alpha(range = c(0, .8))+
-  theme_void()
+    
+  # Establish aesthetics of edges
+  geom_edge_link(aes(color = weight), width = .67, alpha = .67,
+                 arrow = arrow(length = unit(1.5, 'mm'), type = "closed"))+
+  scale_edge_color_distiller(
+    palette = "RdBu", direction = -1,
+    name = "Actual Flow Volume minus\nFlow Volume predicted by\nOLS Regression") +
+  
+  # Create labels
+  labs(title = paste(
+    "Neighborhoods with the",
+    as.character(n), 
+    "Highest\nand",
+    as.character(n),
+    "Lowest Residuals"
+  )) +
+  theme_void() +
+  theme(
+    legend.position = c(.21, .69),
+    legend.title = element_text(size = 9, face = "italic"),
+    plot.title = element_text(size = 12, face = "bold")
+  ) 
 ```
 
 ![](gravity_model_files/figure-gfm/Graph_Visualization-1.png)<!-- -->
-
-``` r
-# Calculate the average residual for each neighborhood...
-average_neighborhood_weights = joint_neighborhoods_norm |>
-    group_by(to) |>
-    summarize(mean_weight = mean(weight), .groups = "drop")
-# ...and join it to a copy of the neighborhoods polygon sf object
-nynta_weights = nynta_proj |>
-  left_join(average_neighborhood_weights, by=c("NTAName" = "to")) |>
-  filter(!is.na(mean_weight))
-
-# Find neighborhoods that have the highest and lowest
-#  average residual in the OLS inflow model
-high_weight_neighborhoods = nynta_weights |>
-    slice_max(order_by = mean_weight, n = 20)
-low_weight_neighborhoods = nynta_weights |>
-    slice_min(order_by = mean_weight, n = 20)
-
-# Mapping how neighborhoods copmare to the OLS gravity model
-tm_shape(nynta_proj) +
-  # Base layer of all neighborhoods (including those with insufficient data)
-  tm_polygons(fill = "gray96") +
-  
-  # Add all neighborhoods that are higher...
-  tm_shape(filter(nynta_weights, mean_weight > 0)) +
-  tm_polygons(fill = "#eeddcc") +
-  # ...or lower than the model on average
-  tm_shape(filter(nynta_weights, mean_weight < 0)) +
-  tm_polygons(fill = "#ddd9ff") +
-  
-  # Add the n neighborhoods with the highest...
-  tm_shape(high_weight_neighborhoods) +
-  tm_polygons(fill = "orange") +
-  # ...and lowest average residuals
-  tm_shape(low_weight_neighborhoods) +
-  tm_polygons(fill = "navy")
-```
-
-![](gravity_model_files/figure-gfm/Residual_Choropleth-1.png)<!-- -->

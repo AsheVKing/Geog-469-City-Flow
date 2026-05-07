@@ -17,14 +17,13 @@ nynta_proj <- st_transform(nynta, crs = 4326)
 
 ``` r
 # Load twitter data and filter by type to get exact coordinates
-#twitter_path <- here("data/raw_data/twitter_data/twitter_na_2017-09_ny.csv.gz")
-twitter_path <- "C:/Users/ldmey/Downloads/469_proj_data/twitter_na_2017-09_ny.csv.gz"
+twitter_path <- here("data/raw_data/twitter_data/twitter_na_2017-09_ny.csv.gz")
 sdf <- fread(twitter_path) %>%
   filter(type == "ll")
-twitter_path <- "C:/Users/ldmey/Downloads/469_proj_data/twitter_na_2017-10_ny.csv.gz"
+twitter_path <- here("data/raw_data/twitter_data/twitter_na_2017-10_ny.csv.gz")
 odf <- fread(twitter_path) %>%
   filter(type == "ll")
-twitter_path <- "C:/Users/ldmey/Downloads/469_proj_data/twitter_na_2017-11_ny.csv.gz"
+twitter_path <- here("data/raw_data/twitter_data/twitter_na_2017-11_ny.csv.gz")
 ndf <- fread(twitter_path) %>%
   filter(type == "ll") 
   # Type ll contains exact lat long while type p is more approximate
@@ -33,6 +32,8 @@ df <- rbindlist(list(sdf, odf, ndf), fill = TRUE)
 ```
 
 ``` r
+# (This code was authored by James) #
+
 # Create a lookup for unique home H3 cells
 home_lookup <- df %>%
   distinct(home) %>%
@@ -68,12 +69,14 @@ sf_nyc_data <- sub_nyc_data %>%
 # Create table with number of posts by user
 posts_table = sf_nyc_data$u_id |>
   table()
-
 # Create weights column in sf object
 #    This column stores the fraction of the user's posts that a single post represents:
 #     ie if the user has 20 posts, the weight value would be .05
 #    This normalization prevents users with many posts from drowning out the
 #     data from users who post less frequently.
+
+# Remove users with only 1 post so they don't
+#  sway the gravity model 
 sf_nyc_data = sf_nyc_data |>
   mutate(weight = 1/posts_table[as.character(u_id)]) |>
   filter(weight < 1)

@@ -158,5 +158,5 @@ plot(vis_1)
 #Solo network graph visualization
 ```{r solo-network-visualization)}
 plot(vis_1 + labs(title = "NYC Network Visualization"))
-#ggsave(filename = here("analysis/3_Create_Nodal_Graph/Network_map.png"), plot = vis_1 + labs(title = "Network Visualization Over Basemap"), dpi = 600)
+#ggsave(filename = here("final_outputs/3_1_Network_map.png"), plot = vis_1 + labs(title = "NYC Network Visualization"), dpi = 600)
 ```

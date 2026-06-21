@@ -40,7 +40,12 @@ all_cells <- h3_nyc_data_slim %>%
 
 # Making node table
 nodes <- all_cells %>%
-  mutate(lat = cellToLatLng(cell_name)$lat, lon = cellToLatLng(cell_name)$lng) %>% 
+  mutate(geometry = cell_to_point(cell_name)) %>%
+  st_as_sf() %>% 
+  st_transform(crs = crs) %>% 
+  mutate(lat = st_coordinates(geometry)[,"X"],
+         lon = st_coordinates(geometry)[,"Y"]) %>% 
+  #mutate(lat = cellToLatLng(cell_name)$lat, lon = cellToLatLng(cell_name)$lng) %>% 
   distinct(cell_name, .keep_all = T) %>% 
   filter(cell_name != "882a1072c7fffff")
 
@@ -94,7 +99,8 @@ graph <-  graph %>%
 basemap <- ggplot(nynta_proj) +
   geom_sf()
 
-vis_1  <- ggraph(graph, x = lon, y = lat, layout = 'manual') +
+vis_1  <- ggraph(graph, x = lat, y = lon, layout = 'manual') +
+  geom_sf(data = st_union(nynta_proj), inherit.aes = F, fill = "#feeded67", color = "darkgrey") +
   geom_edge_link(aes(width = count), alpha = 0.5, color = "lightblue") +
   geom_node_point(aes(size = degree)) + 
   scale_size(range = c(0.1, 2), name = "Node Degree") +
@@ -108,7 +114,7 @@ vis_1  <- ggraph(graph, x = lon, y = lat, layout = 'manual') +
     plot.background = element_rect(fill = "white")
   )
 
-plot(basemap + vis_1)
+plot(vis_1)
 ```
 
 ![](base_graph_files/figure-gfm/combined-basemap-network-graph-1.png)<!-- -->
